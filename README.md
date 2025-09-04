@@ -13,7 +13,7 @@ your own project's `devDependencies` if you have not already done so.
 pnpm add -D @odatnurd/d1-query @axel669/aegis miniflare fs-jetpack
 ```
 
-> [!note] If you are actively using
+> ℹ️ If you are actively using
 > [@odatnurd/d1-query](https://www.npmjs.com/package/@odatnurd/d1-query) in your
 > project, that library should be installed as a regular `dependency` and not a
 > `devDependency`

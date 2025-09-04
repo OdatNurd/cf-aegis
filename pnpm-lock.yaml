@@ -12,8 +12,8 @@ importers:
         specifier: ^0.3.1
         version: 0.3.1
       '@odatnurd/d1-query':
-        specifier: ^0.2.3
-        version: 0.2.3(@axel669/aegis@0.3.1)(fs-jetpack@5.1.0)(miniflare@4.20250829.0)
+        specifier: ^0.2.4
+        version: 0.2.4(@axel669/aegis@0.3.1)(fs-jetpack@5.1.0)(miniflare@4.20250829.0)
       fs-jetpack:
         specifier: ^5.1.0
         version: 5.1.0
@@ -191,8 +191,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@odatnurd/d1-query@0.2.3':
-    resolution: {integrity: sha512-zdJkBqlE9Uzkdlj1BMnjX8NGyISCaf5QUUqYLIP712q1ClT7YZx2JwVq4K9iuBd+KxJHoPNPOs0S1el1ER+L1w==}
+  '@odatnurd/d1-query@0.2.4':
+    resolution: {integrity: sha512-WYitH2B/yvis3w9LDlyaywfDoipMMFHKTQTxvF7dx8iy1ZKBbJPCI++WG8F54nvC5F2XZmgyKqx3fOlBvIumlA==}
     peerDependencies:
       '@axel669/aegis': ^0.3.1
       fs-jetpack: ^5.1.0
@@ -523,7 +523,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@odatnurd/d1-query@0.2.3(@axel669/aegis@0.3.1)(fs-jetpack@5.1.0)(miniflare@4.20250829.0)':
+  '@odatnurd/d1-query@0.2.4(@axel669/aegis@0.3.1)(fs-jetpack@5.1.0)(miniflare@4.20250829.0)':
     optionalDependencies:
       '@axel669/aegis': 0.3.1
       fs-jetpack: 5.1.0
