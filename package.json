@@ -26,21 +26,13 @@
   ],
   "peerDependencies": {
     "@axel669/aegis": "^0.3.1",
-    "@odatnurd/d1-query": "^0.2.4",
-    "fs-jetpack": "^5.1.0",
     "miniflare": "^4.20250813.0"
   },
   "peerDependenciesMeta": {
     "@axel669/aegis": {
       "optional": true
     },
-    "@odatnurd/d1-query": {
-      "optional": true
-    },
     "miniflare": {
-      "optional": true
-    },
-    "fs-jetpack": {
       "optional": true
     }
   },

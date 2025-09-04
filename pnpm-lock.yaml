@@ -11,12 +11,6 @@ importers:
       '@axel669/aegis':
         specifier: ^0.3.1
         version: 0.3.1
-      '@odatnurd/d1-query':
-        specifier: ^0.2.4
-        version: 0.2.4(@axel669/aegis@0.3.1)(fs-jetpack@5.1.0)(miniflare@4.20250829.0)
-      fs-jetpack:
-        specifier: ^5.1.0
-        version: 5.1.0
       miniflare:
         specifier: ^4.20250813.0
         version: 4.20250829.0
@@ -191,20 +185,6 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@odatnurd/d1-query@0.2.4':
-    resolution: {integrity: sha512-WYitH2B/yvis3w9LDlyaywfDoipMMFHKTQTxvF7dx8iy1ZKBbJPCI++WG8F54nvC5F2XZmgyKqx3fOlBvIumlA==}
-    peerDependencies:
-      '@axel669/aegis': ^0.3.1
-      fs-jetpack: ^5.1.0
-      miniflare: ^4.20250813.0
-    peerDependenciesMeta:
-      '@axel669/aegis':
-        optional: true
-      fs-jetpack:
-        optional: true
-      miniflare:
-        optional: true
-
   '@poppinss/colors@4.1.5':
     resolution: {integrity: sha512-FvdDqtcRCtz6hThExcFOgW0cWX+xwSMWcRuQe5ZEb2m7cVQOAVZOIMt+/v9RxGiD9/OY16qJBXK4CVKWAPalBw==}
 
@@ -229,12 +209,6 @@ packages:
     resolution: {integrity: sha512-cl669nCJTZBsL97OF4kUQm5g5hC2uihk0NxY3WENAC0TYdILVkAyHymAntgxGkl7K+t0cXIrH5siy5S4XkFycA==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-
-  balanced-match@1.0.2:
-    resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
-
-  brace-expansion@2.0.2:
-    resolution: {integrity: sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==}
 
   braces@3.0.3:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
@@ -280,9 +254,6 @@ packages:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
 
-  fs-jetpack@5.1.0:
-    resolution: {integrity: sha512-Xn4fDhLydXkuzepZVsr02jakLlmoARPy+YWIclo4kh0GyNGUHnTqeH/w/qIsVn50dFxtp8otPL2t/HcPJBbxUA==}
-
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
     engines: {node: '>= 6'}
@@ -321,10 +292,6 @@ packages:
     resolution: {integrity: sha512-V1DLPnOXjm0DtfU9K0ftrxF+G7LkQ3nDKtXGdU8+Vf+dOqdGM+3ZHZOcDC5XPOsDnI280HBd5xcos/ghtGB7cg==}
     engines: {node: '>=18.0.0'}
     hasBin: true
-
-  minimatch@5.1.6:
-    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
-    engines: {node: '>=10'}
 
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
@@ -523,12 +490,6 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@odatnurd/d1-query@0.2.4(@axel669/aegis@0.3.1)(fs-jetpack@5.1.0)(miniflare@4.20250829.0)':
-    optionalDependencies:
-      '@axel669/aegis': 0.3.1
-      fs-jetpack: 5.1.0
-      miniflare: 4.20250829.0
-
   '@poppinss/colors@4.1.5':
     dependencies:
       kleur: 4.1.5
@@ -548,12 +509,6 @@ snapshots:
   acorn-walk@8.3.2: {}
 
   acorn@8.14.0: {}
-
-  balanced-match@1.0.2: {}
-
-  brace-expansion@2.0.2:
-    dependencies:
-      balanced-match: 1.0.2
 
   braces@3.0.3:
     dependencies:
@@ -599,10 +554,6 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
-  fs-jetpack@5.1.0:
-    dependencies:
-      minimatch: 5.1.6
-
   glob-parent@5.1.2:
     dependencies:
       is-glob: 4.0.3
@@ -645,10 +596,6 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-
-  minimatch@5.1.6:
-    dependencies:
-      brace-expansion: 2.0.2
 
   picomatch@2.3.1: {}
 
