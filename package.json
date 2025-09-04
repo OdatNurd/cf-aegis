@@ -1,0 +1,54 @@
+{
+  "name": "@odatnurd/cf-aegis",
+  "version": "{{VERSION}}",
+  "description": "Simple Aegis Test Helpers",
+  "author": "OdatNurd (https://odatnurd.net)",
+  "homepage": "https://github.com/OdatNurd/cf-aegis",
+  "bugs": "https://github.com/OdatNurd/cf-aegis/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OdatNurd/cf-aegis"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "files": [
+    "lib",
+    "LICENSE"
+  ],
+  "keywords": [
+    "cloudflare",
+    "d1",
+    "aegis"
+  ],
+  "peerDependencies": {
+    "@axel669/aegis": "^0.3.1",
+    "@odatnurd/d1-query": "^0.2.3",
+    "fs-jetpack": "^5.1.0",
+    "miniflare": "^4.20250813.0"
+  },
+  "peerDependenciesMeta": {
+    "@axel669/aegis": {
+      "optional": true
+    },
+    "@odatnurd/d1-query": {
+      "optional": true
+    },
+    "miniflare": {
+      "optional": true
+    },
+    "fs-jetpack": {
+      "optional": true
+    }
+  },
+  "packageManager": "pnpm@10.15.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp",
+      "workerd"
+    ]
+  }
+}
