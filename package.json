@@ -24,6 +24,12 @@
     "d1",
     "aegis"
   ],
+  "devDependencies": {
+    "@axel669/aegis": "^0.3.1",
+    "json5": "^2.2.3",
+    "miniflare": "^4.20250813.0",
+    "smol-toml": "^1.4.2"
+  },
   "peerDependencies": {
     "@axel669/aegis": "^0.3.1",
     "miniflare": "^4.20250813.0"
