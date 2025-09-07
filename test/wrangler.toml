@@ -1,0 +1,43 @@
+# Comprehensive example wrangler.toml for cf-aegis testing
+
+name = "aegis-full-test"
+main = "./worker.js"
+compatibility_date = "2024-01-01"
+
+# 1. Static Asset binding
+[assets]
+binding = "ASSETS_SITE"
+directory = "./public"
+
+# 2. D1 Database binding
+[[d1_databases]]
+binding = "DB_MAIN"
+database_name = "aegis-test-db"
+database_id = "00000000-0000-0000-0000-000000000001"
+
+# 3. R2 Bucket binding
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "aegis-test-bucket"
+
+# 4. KV Namespace binding
+[[kv_namespaces]]
+binding = "KV_CONFIG"
+id = "00000000000000000000000000000002"
+
+# 5. Durable Object binding
+[durable_objects]
+bindings = [
+  { name = "DO_COUNTER", class_name = "Counter" }
+]
+
+# 6. Queue binding
+[queues]
+producers = [
+  { binding = "QUEUE_MAIN", queue = "aegis-test-queue" }
+]
+
+# 7. Simple Key-Value bindings (vars)
+[vars]
+API_VERSION = "v1.0.0"
+ENVIRONMENT = "testing"
