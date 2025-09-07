@@ -1,0 +1,13 @@
+{
+  "name": "aegis-static-test",
+  "main": "./worker.js",
+  "compatibility_date": "2024-04-03",
+  "dev": {
+    "port": 9003,
+    "hostname": "127.0.0.1"
+  },
+  "assets": {
+    "binding": "ASSETS_SITE",
+    "directory": "./public"
+  }
+}

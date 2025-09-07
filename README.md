@@ -2,9 +2,9 @@
 
 
 This package includes a set of helpers to facilitate testing projects with the
-[Aegis](https://www.npmjs.com/package/@axel669/aegis) test runner and an
-in-memory D1 database powered by Miniflare for use when developing
-[Cloudflare Workers](https://developers.cloudflare.com/workers/).
+[Aegis](https://www.npmjs.com/package/@axel669/aegis) test runner and a
+[Cloudflare Worker](https://developers.cloudflare.com/workers/) via
+[Miniflare](https://developers.cloudflare.com/workers/testing/miniflare/).
 
 To use these utilities, you must install the required peer dependencies into
 your own project's `devDependencies` if you have not already done so.
@@ -17,14 +17,55 @@ The `@odatnurd/cf-aegis` module exports the following functions:
 
 
 ```javascript
-export async function aegisSetup(ctx, dbName = 'DB') {}
+export async function aegisSetup(ctx, inputConfig, workerMocks = {}) {}
 ```
-An async function to be called from the `setup` hook in your Aegis config. It
-creates a new Miniflare instance with a D1 database binding named `dbName`.
+An async function to be invoked from the `setup` hook in your Aegis config file.
+This uses the provided configuration to create a new Miniflare instance.
 
-The provided Aegis scope context (e.g. runScope) object will be populated with
-a `db` property that provides the database context, and a `worker` property
-that stores the Miniflare worker.
+`inputConfig` can be one of:
+- A wrangler configuration file (in `TOML` or `JSONC` format)
+- An object with the structure of a parsed Wrangler configuration file
+
+Using the configuration, a Miniflare worker is configured, and the passed in
+`ctx` object has the following fields injected into it:
+
+- `worker`: the actual Miniflare worker instance
+- `env`: an object that contains all of the configured bindings, as they would
+  be presented to you in a worker
+- `isServerListening`: a boolean that indicates if the configuration contained
+  a port, in which case a development service will be started
+- `serverBaseUrl`: if `isServerListening` is `true`, this key will be added and
+  gives you the full base URL for all routes in the worker, including the
+  configured port.
+- `fetch`: if `isServerListening` is `true`, this is a wrapped function on the
+  `fetch()` method that allows fetching from URL fragments without needing to
+  know the port (e.g `ctx.fetch('/api/thing')`)
+
+
+The configuration currently supports:
+- `D1` databases
+- `R2` storage
+- `Durable Objects`
+- `KV`
+- `Queues`
+- `Static Assets` (see below)
+- `Service Bindings`
+
+When using `service bindings`, all services will, by default, be mocked to
+include a `fetch` handler that generates an error response saying the service
+is not mocked. This facilitates testing in cases where the bound services are
+not needed.
+
+Optionally, the `workerMocks` object can be populated; the keys are the names
+of the service bindings, and the values are objects that contain either a
+`script` or `scriptPath` field to specify the body of the service.
+
+> ⚠️ **Warning**
+> Currently, if a worker is configured to contain both static assets and a
+> worker, the static assets will override all worker resources, such that any
+> request to the worker that is not a static asset will return a `404`.
+>
+> This bug will be addressed in a follow-up version.
 
 ---
 
@@ -33,7 +74,8 @@ export async function aegisTeardown(ctx) {}
 ```
 An async function to be called from the `teardown` hook in your Aegis config
 that aligns with the `setup` hook. It safely disposes of the Miniflare instance
-created by `aegisSetup`.
+created by `aegisSetup` and removes from `ctx` all of the values added to it by
+`aegisSetup`.
 
 
 ---
@@ -52,24 +94,33 @@ This augments the internal tests that are already available in Aegis.
 * `.keyCount($, count)`: Checks if an object has an exact number of keys.
 * `.isFunction($)`: A shortcut to check if a value is an instance of
   `Function`.
+* `.isNotFunction($)`: A shortcut to check if a value is not an instance of
+  `Function`.
+* `.deepEquals($, expected)`: Does a deep equality check (e.g. on an array or
+ an object) to ensure that they are completely equal; can also be used on other
+ values as well.
+* `.notDeepEquals($, expected)`: Does a deep equality check as above, but with a
+  check for inequality instead.
 
 
-### Configuration
+
+### Configuration Examples
 
 You can import the helper functions into your `aegis.config.js` file to easily
-set up a test environment, optionally also populating one or more SQL files into
-the database first in order to set up testing if using a database (for example
-via [@odatnurd/d1-query](https://www.npmjs.com/package/@odatnurd/d1-query))
+set up a test environment. The `aegisSetup()` function accepts either an object
+that is a structured Wrangler config object or the name of a wrangler config
+file, and will configure Miniflare appropriately.
 
 **Example `aegis.config.js`:**
+
+This example configures a worker to include a binding for a database and an R2
+bucket; they appear in the `ctx` as `ctx.env.DB` and `ctx.env.BUCKET`
+respectively.
 
 ```js
 import { initializeCustomChecks, aegisSetup, aegisTeardown } from '@odatnurd/cf-aegis';
 
-import { initializeD1Checks, execSQLFiles } from '@odatnurd/d1-query/aegis';
-
 initializeCustomChecks();
-initializeD1Checks();
 
 export const config = {
     files: [
@@ -77,8 +128,144 @@ export const config = {
     ],
     hooks: {
         async setup(ctx) {
-            await aegisSetup(ctx, 'DB');
-            await execSQLFiles(ctx.db, 'test/setup.sql');
+            await aegisSetup(ctx, {
+              d1_databases: [{
+                binding: 'DB',
+                database_name: 'test-db',
+                database_id: 'test-db-id'
+              }],
+              r2_buckets: [{
+                binding: 'BUCKET',
+                bucket_name: 'test-bucket'
+              }]
+            });
+        },
+
+        async teardown(ctx) {
+            await aegisTeardown(ctx);
+        },
+    },
+    failAction: "afterSection",
+}
+```
+
+The format of the configuration object is that of a loaded Wrangler
+configuration file in either of the supported formats. Optionally, if you
+already have a config file to use, you can point the function at it and it will
+load the config for you.
+
+**wrangler.toml**
+
+```toml
+name = "aegis-test"
+main = "src/index.js"
+compatibility_date = "2024-04-05"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "test-db"
+database_id = "test-db-id"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "test-bucket"
+```
+
+or if you prefer to not use `Toms Obnoxious Malformed Language`, `JSONC` is
+also supported:
+
+```jsonc
+{
+  "name": "aegis-test",
+  "main": "src/index.js",
+  "compatibility_date": "2024-04-05",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "test-db",
+      "database_id": "test-db-id"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "test-bucket"
+    }
+  ]
+}
+```
+
+Then the example becomes:
+
+```js
+import { initializeCustomChecks, aegisSetup, aegisTeardown } from '@odatnurd/cf-aegis';
+
+initializeCustomChecks();
+
+export const config = {
+    files: [
+        "test/**/*.test.js",
+    ],
+    hooks: {
+        async setup(ctx) {
+            // You can use either 'wrangler.toml' or 'wrangler.jsonc' here
+            await aegisSetup(ctx, './wrangler.toml');
+        },
+
+        async teardown(ctx) {
+            await aegisTeardown(ctx);
+        },
+    },
+    failAction: "afterSection",
+}
+```
+
+
+#### Mocking Service Bindings
+
+Should your configuration require that you bind to another worker, by default
+the binding will be set up such that all requests to that worker generate an
+error response telling you that it is not mocked; this is considered the most
+common use case, where you would be reusing an existing configuration but
+testing code paths that don't touch external services.
+
+If you require such services to be implemented, you can tell `aegisSetup()` what
+services to mock and how the mocks work. This can be done via an inline script
+as in this example or by providing a `scriptPath` instead to point at a file,
+should the mock be more complex.
+
+```js
+import { initializeCustomChecks, aegisSetup, aegisTeardown } from '@odatnurd/cf-aegis';
+
+initializeCustomChecks();
+
+export const config = {
+    files: [
+        "test/**/*.test.js",
+    ],
+    hooks: {
+        async setup(ctx) {
+            // Define the inline configuration for the main worker
+            const config = {
+              services: [{
+                // The name of the binding; e.g. ctx.env.LOG_SERVICE
+                binding: 'LOG_SERVICE',
+                service: 'log-service'
+              }]
+            };
+
+            const workerMocks = {
+              'log-service': {
+                // For a more complex mock, you can use scriptPath: './path/to/mock-worker.js'
+                script: `export default {
+                  fetch(request) {
+                    return new Response('Success', { status: 200 });
+                  }
+                }`
+              }
+            };
+
+            await aegisSetup(ctx, config, workerMocks);
         },
 
         async teardown(ctx) {

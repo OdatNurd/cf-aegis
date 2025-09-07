@@ -1,0 +1,45 @@
+name = "aegis-full-test"
+main = "./worker.js"
+compatibility_date = "2024-04-03"
+
+[dev]
+port = 9002
+hostname = "127.0.0.1"
+
+[[d1_databases]]
+binding = "DB_MAIN"
+database_name = "aegis-test-db"
+database_id = "00000000-0000-0000-0000-000000000001"
+
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "aegis-test-bucket"
+
+[[kv_namespaces]]
+binding = "KV_CONFIG"
+id = "00000000000000000000000000000002"
+
+[durable_objects]
+bindings = [
+  { name = "DO_COUNTER", class_name = "Counter" }
+]
+
+[queues]
+producers = [
+  { binding = "QUEUE_MAIN", queue = "aegis-test-queue" }
+]
+consumers = [
+  { queue = "aegis-test-queue" }
+]
+
+[vars]
+API_VERSION = "v1.0.0"
+ENVIRONMENT = "testing"
+
+[[services]]
+binding = "AUTH_SERVICE"
+service = "my-auth-worker"
+
+[[services]]
+binding = "LOGGING_SERVICE"
+service = "my-logging-worker"

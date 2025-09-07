@@ -15,6 +15,9 @@
   "exports": {
     ".": "./lib/index.js"
   },
+  "scripts": {
+    "test": "aegis test/aegis.config.js"
+  },
   "files": [
     "lib",
     "LICENSE"
@@ -24,9 +27,15 @@
     "d1",
     "aegis"
   ],
+  "devDependencies": {
+    "@axel669/aegis": "^0.3.1",
+    "json5": "^2.2.3",
+    "miniflare": "^4.20250923.0",
+    "smol-toml": "^1.4.2"
+  },
   "peerDependencies": {
     "@axel669/aegis": "^0.3.1",
-    "miniflare": "^4.20250813.0"
+    "miniflare": "^4.20250923.0"
   },
   "peerDependenciesMeta": {
     "@axel669/aegis": {
@@ -36,7 +45,7 @@
       "optional": true
     }
   },
-  "packageManager": "pnpm@10.15.1",
+  "packageManager": "pnpm@10.17.1",
   "pnpm": {
     "onlyBuiltDependencies": [
       "sharp",
