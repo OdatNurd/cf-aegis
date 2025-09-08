@@ -59,5 +59,17 @@
   "vars": {
     "API_VERSION": "v1.0.0",
     "ENVIRONMENT": "testing"
-  }
+  },
+
+  // 8. Service Binding
+  "services": [
+    {
+      "binding": "AUTH_SERVICE",
+      "service": "my-auth-worker"
+    },
+    {
+      "binding": "LOGGING_SERVICE",
+      "service": "my-logging-worker"
+    }
+  ]
 }
