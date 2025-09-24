@@ -10,7 +10,7 @@ To use these utilities, you must install the required peer dependencies into
 your own project's `devDependencies` if you have not already done so.
 
 ```sh
-pnpm add -D @axel669/aegis miniflare
+pnpm add -D @axel669/aegis miniflare json5 smol-toml
 ```
 
 The `@odatnurd/cf-aegis` module exports the following functions:
