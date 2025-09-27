@@ -3,7 +3,7 @@
 
 import { Collection, $check, $ } from "@axel669/aegis";
 
-import { createMiniflareOptions } from "../lib/wrangler.js";
+import { createMiniflareOptions } from "../lib/miniflare.js";
 
 
 /******************************************************************************/

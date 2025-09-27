@@ -103,6 +103,19 @@ This augments the internal tests that are already available in Aegis.
   check for inequality instead.
 
 
+The `@odatnurd/cf-aegis/config` module exports the following function:
+
+
+```javascript
+export function loadWranglerConfig(filename) {}
+```
+Given the path to a Wrangler configuration file (in either `TOML` or `JSONC`
+format), load the configuration and return the object back.
+
+This can be useful in cases where you want tests to be configured via the same
+Wrangler config that you use to develop and deploy your application, but you
+need to amend it prior to testing in some fashion.
+
 
 ### Configuration Examples
 

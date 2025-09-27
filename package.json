@@ -13,7 +13,8 @@
   "type": "module",
   "main": "lib/index.js",
   "exports": {
-    ".": "./lib/index.js"
+    ".": "./lib/index.js",
+    "./config": "./lib/wrangler.js"
   },
   "scripts": {
     "test": "aegis test/aegis.config.js"

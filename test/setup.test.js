@@ -21,7 +21,7 @@ export default Collection`Aegis Setup and Teardown`({
     const ctx = {};
 
     // Run the setup function with the empty config.
-    await aegisSetup(ctx, {});
+    await aegisSetup(ctx);
 
     // Verify that the setup function populated the context object with all
     // of the expected default properties.
