@@ -19,6 +19,8 @@ export const config = {
     "test/config.test.js",
     "test/setup.test.js",
     "test/fetch.test.js",
+    "test/assets.test.js",
+    // "test/mixed.test.js",
   ],
 
   // Can be set to "afterSection" or "afterCollection" to have the test suite
