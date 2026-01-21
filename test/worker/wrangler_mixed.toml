@@ -1,9 +1,9 @@
-name = "aegis-static-test"
+name = "aegis-mixed-test"
 main = "./worker.js"
 compatibility_date = "2025-09-27"
 
 [dev]
-port = 9003
+port = 9004
 hostname = "127.0.0.1"
 
 [assets]
