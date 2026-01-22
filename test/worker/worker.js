@@ -56,6 +56,32 @@ export default {
       return new Response("Hello World");
     }
 
+    // This route attempts to use the configured asset binding to fetch the
+    // sample asset, returning either the appropriate data back, or a 404,
+    // depending.
+    //
+    // This one should succeed if things work, because this asset exists.
+    if (url.pathname === "/asset_test_one") {
+      const assetUrl = new URL("/test.txt", request.url);
+      const response = await env.ASSETS_SITE.fetch(new Request(assetUrl, request));
+
+      if (response.status === 200) {
+        return response;
+      }
+      return new Response("Asset lookup failed unexpectedly", { status: 404 });
+    }
+
+    // This route it as above, but it uses an asset that does not exist, to
+    // verify that in fact the handling works as expected and lets the worker
+    // know that the data requested is not present.
+    if (url.pathname === "/asset_test_two") {
+      const assetUrl = new URL("/does-not-exist.txt", request.url);
+      const response = await env.ASSETS_SITE.fetch(new Request(assetUrl, request));
+
+      // We expect a 404 here, so just return the response as-is (or a specific message)
+      return response;
+    }
+
     // For any other request, return a 404. This allows Miniflare's
     // transparent static asset serving to handle the request if it matches a file.
     return new Response("Not found", { status: 404 });

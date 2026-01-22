@@ -17,7 +17,7 @@ The `@odatnurd/cf-aegis` module exports the following functions:
 
 
 ```javascript
-export async function aegisSetup(ctx, inputConfig, workerMocks = {}) {}
+export async function aegisSetup(ctx, inputConfig, { portAdjustment = 0, workerMocks = {} }) {}
 ```
 An async function to be invoked from the `setup` hook in your Aegis config file.
 This uses the provided configuration to create a new Miniflare instance.
@@ -34,12 +34,15 @@ Using the configuration, a Miniflare worker is configured, and the passed in
   be presented to you in a worker
 - `isServerListening`: a boolean that indicates if the configuration contained
   a port, in which case a development service will be started
-- `serverBaseUrl`: if `isServerListening` is `true`, this key will be added and
-  gives you the full base URL for all routes in the worker, including the
+
+Additionally, the following keys will be added when `isServerListening` is set
+to `true`:
+- `serverPort`: the port that the server is listening on, including any desired
+  adjustment (see below).
+- `serverBaseUrl`: the full base URL for all routes in the worker, including the
   configured port.
-- `fetch`: if `isServerListening` is `true`, this is a wrapped function on the
-  `fetch()` method that allows fetching from URL fragments without needing to
-  know the port (e.g `ctx.fetch('/api/thing')`)
+- `fetch`: a wrapped function on the `fetch()` method that allows fetching from
+  URL fragments without needing to know the port (e.g `ctx.fetch('/api/thing')`)
 
 
 The configuration currently supports:
@@ -56,16 +59,25 @@ include a `fetch` handler that generates an error response saying the service
 is not mocked. This facilitates testing in cases where the bound services are
 not needed.
 
-Optionally, the `workerMocks` object can be populated; the keys are the names
-of the service bindings, and the values are objects that contain either a
-`script` or `scriptPath` field to specify the body of the service.
+Optionally, the `workerMocks` field in the passed options object can be
+populated; the keys are the names of the service bindings, and the values are
+objects that contain either a `script` or `scriptPath` field to specify the
+body of the service.
+
+The options can also include a portAdjustment which will be added to the port
+in the configuration before it is passed to Miniflare; this allows the port to
+be modified during test runs, which can be handy for things like running the
+tests while a development server is running on the same machine.
 
 > ⚠️ **Warning**
-> Currently, if a worker is configured to contain both static assets and a
-> worker, the static assets will override all worker resources, such that any
-> request to the worker that is not a static asset will return a `404`.
+> Currently, there appear to be a bug in miniflar that causes it static asset
+> handling to not work properly when a worker is defined; it should try to fetch
+> assets first, and then fall back to the main worker. However instead the asset
+> handler consumes all requests and will 404 on anything that is not an asset.
 >
-> This bug will be addressed in a follow-up version.
+> `cf-aegis` has a workaround in place for this that injects extra workers in to
+> mimic what should happen, to allow for tests that use assets to work as they
+> are expected to.
 
 ---
 
@@ -278,7 +290,7 @@ export const config = {
               }
             };
 
-            await aegisSetup(ctx, config, workerMocks);
+            await aegisSetup(ctx, config, { workerMocks });
         },
 
         async teardown(ctx) {

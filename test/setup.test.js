@@ -65,7 +65,7 @@ export default Collection`Aegis Setup and Teardown`({
       },
     };
 
-    await aegisSetup(ctx, './test/worker/wrangler.toml', workerMocks);
+    await aegisSetup(ctx, './test/worker/wrangler.toml', { workerMocks });
 
     $check`Variables are bound correctly`
       .value(ctx.env)

@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { initializeCustomChecks, aegisSetup, aegisTeardown } from "../lib/index.js";
+import { initializeCustomChecks } from "../lib/index.js";
 
 
 /******************************************************************************/
@@ -20,8 +20,11 @@ export const config = {
     "test/setup.test.js",
     "test/fetch.test.js",
     "test/assets.test.js",
-    // "test/mixed.test.js",
+    "test/mixed.test.js",
   ],
+
+  // The usual setup and teardown hooks are in the individual tests since they
+  // exercise different configuration files and setups.
 
   // Can be set to "afterSection" or "afterCollection" to have the test suite
   // exit as soon as a check fails in a section or collection. Default of

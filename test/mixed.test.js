@@ -79,6 +79,37 @@ export default Collection`Mixed Worker & Assets`({
 
     await aegisTeardown(ctx);
   },
+
+
+  /****************************************************************************/
+
+
+  /* This section verifies that the worker can explicitly access the asset
+   * binding to fetch files programmatically. This verifies that our workaround
+   * works, if it's present, and that miniflare works, if its not. */
+  "Explicit Asset Binding": async ({ runScope }) => {
+    const ctx = {};
+    const expected = await readFile("./test/worker/public/test.txt", "utf-8");
+
+    await aegisSetup(ctx, './test/worker/wrangler_mixed.toml');
+
+    await $check`Worker can fetch existing asset via binding`
+      .call(async () => {
+        const res = await ctx.fetch('/asset_test_one');
+        return { status: res.status, text: await res.text() };
+      })
+      .eq($.status, 200)
+      .eq($.text, expected);
+
+    await $check`Worker receives 404 when fetching missing asset via binding`
+      .call(async () => {
+        const res = await ctx.fetch('/asset_test_two');
+        return { status: res.status };
+      })
+      .eq($.status, 404);
+
+    await aegisTeardown(ctx);
+  },
 });
 
 
