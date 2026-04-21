@@ -69,8 +69,16 @@ in the configuration before it is passed to Miniflare; this allows the port to
 be modified during test runs, which can be handy for things like running the
 tests while a development server is running on the same machine.
 
+> ℹ️ **Info**
+> When running, if the `env` for the worker does not already supply it, a
+> `CF_AEGIS` environment variable with its value set to "true" will be injected
+> to allow tests to know that they are running in the test environment.
+>
+> Should such a variable actually exist, its value will be left untouched.
+
+
 > ⚠️ **Warning**
-> Currently, there appear to be a bug in miniflar that causes it static asset
+> Currently, there appear to be a bug in Miniflare that causes it static asset
 > handling to not work properly when a worker is defined; it should try to fetch
 > assets first, and then fall back to the main worker. However instead the asset
 > handler consumes all requests and will 404 on anything that is not an asset.
