@@ -47,6 +47,39 @@ export default Collection`Aegis Setup and Teardown`({
   /****************************************************************************/
 
 
+  /* This section verifies that the CF_AEGIS environment variable is correctly
+   * injected into the worker bindings, and that it does not overwrite a
+   * value if the user explicitly configured one. */
+  "CF_AEGIS Environment Variable": async ({ runScope }) => {
+    const ctx1 = {};
+
+    // Provide an empty config, which should result in CF_AEGIS being injected
+    // with the default value of 'true'.
+    await aegisSetup(ctx1, {});
+
+    $check`CF_AEGIS is injected as 'true' by default`
+      .value(ctx1.env)
+      .eq($.CF_AEGIS, 'true');
+
+    await aegisTeardown(ctx1);
+
+    const ctx2 = {};
+
+    // Provide a config that explicitly sets a value for CF_AEGIS, which should
+    // bypass the injection and keep the configured value.
+    await aegisSetup(ctx2, { vars: { CF_AEGIS: 'custom-value' } });
+
+    $check`Pre-existing CF_AEGIS is not overwritten`
+      .value(ctx2.env)
+      .eq($.CF_AEGIS, 'custom-value');
+
+    await aegisTeardown(ctx2);
+  },
+
+
+  /****************************************************************************/
+
+
   /* This section performs an integration test on all bindings except for
    * static assets. It verifies that loading a full wrangler configuration
    * results in a correctly configured Miniflare environment. */
@@ -66,6 +99,10 @@ export default Collection`Aegis Setup and Teardown`({
     };
 
     await aegisSetup(ctx, './test/worker/wrangler.toml', { workerMocks });
+
+    await $check`Injected CF_AEGIS variable is present in the loaded configuration`
+      .value(ctx.env)
+      .eq($.CF_AEGIS, 'true');
 
     $check`Variables are bound correctly`
       .value(ctx.env)

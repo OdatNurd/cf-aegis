@@ -31,14 +31,14 @@
   "devDependencies": {
     "@axel669/aegis": "^0.3.1",
     "json5": "^2.2.3",
-    "miniflare": "^4.20260116.0",
-    "smol-toml": "^1.6.0"
+    "miniflare": "^4.20260421.0",
+    "smol-toml": "^1.6.1"
   },
   "peerDependencies": {
     "@axel669/aegis": "^0.3.1",
     "json5": "^2.2.3",
-    "miniflare": "^4.20250923.0",
-    "smol-toml": "^1.4.2"
+    "miniflare": "^4.20260421.0",
+    "smol-toml": "^1.6.1"
   },
   "peerDependenciesMeta": {
     "@axel669/aegis": {
@@ -48,7 +48,7 @@
       "optional": true
     }
   },
-  "packageManager": "pnpm@10.28.1",
+  "packageManager": "pnpm@10.33.0",
   "pnpm": {
     "onlyBuiltDependencies": [
       "sharp",
