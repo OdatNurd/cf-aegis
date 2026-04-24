@@ -4,6 +4,7 @@
 import { Collection, $check, $ } from "@axel669/aegis";
 
 import { createMiniflareOptions } from "../lib/miniflare.js";
+import { resolveEnvironmentConfig } from "../lib/config.js";
 
 
 /******************************************************************************/
@@ -266,6 +267,72 @@ export default Collection`Wrangler Configuration Parsing`({
   /****************************************************************************/
 
 
+  /* This section tests that the secrets configuration is correctly mapped,
+   * specifically ensuring that only the 'required' array is passed through and
+   * that improperly formatted secrets are safely ignored. */
+  "Secrets Configuration": ({ runScope }) => {
+    // Valid case: secrets.required is an array
+    const validConfig = {
+      secrets: {
+        required: ['API_KEY', 'OTHER_SECRET'],
+        ignored_key: 'should not appear'
+      }
+    };
+
+    const validExpected = {
+      workers: [
+        {
+          name: 'main',
+          modules: true,
+          bindings: {},
+          secrets: {
+            required: ['API_KEY', 'OTHER_SECRET']
+          }
+        }
+      ]
+    };
+
+    $check`Valid secrets array is mapped correctly`
+      .value(createMiniflareOptions(validConfig, {}))
+      .deepEquals($, validExpected);
+
+    // Invalid case: secrets.required is not an array
+    const invalidConfig = {
+      secrets: {
+        required: 'API_KEY'
+      }
+    };
+
+    const emptyExpected = {
+      workers: [
+        {
+          name: 'main',
+          modules: true,
+          bindings: {}
+        }
+      ]
+    };
+
+    $check`Invalid secrets.required (not an array) is safely ignored`
+      .value(createMiniflareOptions(invalidConfig, {}))
+      .deepEquals($, emptyExpected);
+
+    // Invalid case: secrets object exists but lacks required key
+    const missingRequiredConfig = {
+      secrets: {
+        other_key: ['API_KEY']
+      }
+    };
+
+    $check`Secrets object without required key is safely ignored`
+      .value(createMiniflareOptions(missingRequiredConfig, {}))
+      .deepEquals($, emptyExpected);
+  },
+
+
+  /****************************************************************************/
+
+
   /* This final section combines all possible options into a single config
    * object to ensure they are all processed together correctly. This test
    * also implicitly verifies the behavior for a service that does not have
@@ -275,6 +342,7 @@ export default Collection`Wrangler Configuration Parsing`({
       main: './worker.js',
       compatibility_date: '2025-01-01',
       vars: { ENV: 'production' },
+      secrets: { required: ['MY_SECRET'] },
       assets: { binding: 'ASSETS', directory: './dist' },
       kv_namespaces: [{ binding: 'KV', id: 'kv_id' }],
       r2_buckets: [{ binding: 'R2', bucket_name: 'r2_bucket' }],
@@ -294,6 +362,7 @@ export default Collection`Wrangler Configuration Parsing`({
           scriptPath: './worker.js',
           compatibilityDate: '2025-01-01',
           bindings: { ENV: 'production' },
+          secrets: { required: ['MY_SECRET'] },
           assets: { binding: 'ASSETS', directory: './dist' },
           kvNamespaces: ['KV'],
           r2Buckets: ['R2'],
@@ -307,7 +376,7 @@ export default Collection`Wrangler Configuration Parsing`({
           script: `
           export default {
             fetch(request) {
-              console.log(\`(cf-aegis) mock for service 'my-service' received a request for: \${request.url}\`);
+              console.log(\`[cf-aegis] mock for service 'my-service' received a request for: \${request.url}\`);
               return new Response('Service not implemented in test environment', { status: 404 });
             }
           }
@@ -336,6 +405,74 @@ export default Collection`Wrangler Configuration Parsing`({
       .eq($.port, expected.port)
       .eq($.host, expected.host);
   },
+
+
+  /****************************************************************************/
+
+
+  /* This section validates the environment resolution logic by verifying that
+   * inheritable keys fall back correctly and non-inheritable keys are strictly
+   * isolated to their respective environments. */
+  "Environment Resolution": ({ runScope }) => {
+    const rawConfig = {
+      // Inheritable top-level keys
+      main: './top-level.js',
+      compatibility_date: '2025-01-01',
+      dev: { port: 8080 },
+      assets: { binding: 'ASSETS', directory: './public' },
+
+      // Non-inheritable top-level keys
+      vars: { ENV: 'production', ONLY_TOP: 'yes' },
+      durable_objects: { bindings: [{ name: 'DO', class_name: 'Counter' }] },
+
+      // Environment overrides
+      env: {
+        staging: {
+          // Overriding an inheritable key
+          assets: { binding: 'ASSETS', directory: './staging-public' },
+
+          // Environment-specific non-inheritable keys
+          vars: { ENV: 'staging', ONLY_ENV: 'yes' },
+          kv_namespaces: [{ binding: 'KV', id: 'staging_kv' }]
+        }
+      }
+    };
+
+    // Test Case 1: No environment specified
+    const defaultResolved = resolveEnvironmentConfig(rawConfig, undefined);
+    const expectedDefault = {
+      main: './top-level.js',
+      compatibility_date: '2025-01-01',
+      dev: { port: 8080 },
+      assets: { binding: 'ASSETS', directory: './public' },
+      vars: { ENV: 'production', ONLY_TOP: 'yes' },
+      durable_objects: { bindings: [{ name: 'DO', class_name: 'Counter' }] }
+    };
+
+    $check`Default environment resolves strictly top-level keys`
+      .value(defaultResolved)
+      .deepEquals($, expectedDefault);
+
+    // Test Case 2: Environment specified
+    const stagingResolved = resolveEnvironmentConfig(rawConfig, 'staging');
+    const expectedStaging = {
+      // Inherited from top level
+      main: './top-level.js',
+      compatibility_date: '2025-01-01',
+      dev: { port: 8080 },
+
+      // Overridden by environment
+      assets: { binding: 'ASSETS', directory: './staging-public' },
+
+      // Strict environment non-inheritable keys (top-level counterparts ignored)
+      vars: { ENV: 'staging', ONLY_ENV: 'yes' },
+      kv_namespaces: [{ binding: 'KV', id: 'staging_kv' }]
+    };
+
+    $check`Specified environment inherits, overrides, and isolates correctly`
+      .value(stagingResolved)
+      .deepEquals($, expectedStaging);
+  }
 });
 
 

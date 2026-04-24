@@ -1,29 +1,69 @@
 # Cloudflare Aegis Test Wrapper
 
 
-This package includes a set of helpers to facilitate testing projects with the
-[Aegis](https://www.npmjs.com/package/@axel669/aegis) test runner and a
-[Cloudflare Worker](https://developers.cloudflare.com/workers/) via
-[Miniflare](https://developers.cloudflare.com/workers/testing/miniflare/).
+This package is a helper package that facilitates writing unit tests for a
+[Cloudflare Worker](https://developers.cloudflare.com/workers/) using the
+[Aegis](https://www.npmjs.com/package/@axel669/aegis) test library, for those
+that are not interested in using the
+[Cloudflare Vitest Integration](https://developers.cloudflare.com/workers/testing/vitest-integration/)
+via [vitest](https://vitest.dev/).
 
-To use these utilities, you must install the required peer dependencies into
-your own project's `devDependencies` if you have not already done so.
+Behind the scenes,
+[Miniflare](https://developers.cloudflare.com/workers/testing/miniflare/) is
+used to run the worker in a manner consistent with how
+[Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-
+update/) would run it.
+
+
+## Requirements
+
+To use the test utilities contained within this package, you must install the
+required peer dependencies into your own project's `devDependencies` if you
+have not already done so:
 
 ```sh
 pnpm add -D @axel669/aegis miniflare json5 smol-toml
 ```
 
-The `@odatnurd/cf-aegis` module exports the following functions:
 
+## Usage
+
+The core library itself exposes a small subset of functions that allow it to
+load a `Wrangler` configuration file, ensure that any environment variables and
+secrets are properly set up (including across environments, see below) and
+launch the worker, as well as cleaning up after it as well.
+
+> ℹ️ **Info**
+> Some of the other modules in the package have exportable functions, such as
+> for loading a Wrangler configuration file, reducing it to only the environment
+> to be executed, and so on.
+>
+> These are not part of the officially supported public interface, but are
+> nonetheless available for use with the caveat that there is some possibility
+> that they might be replaced or altered in the future.
+
+
+### Core Functionality
+
+```js
+import {
+  aegisSetup,
+  aegisTeardown,
+  initializeCustomChecks
+} from '@odatnurd/cf-aegis'
+```
+
+---
 
 ```javascript
-export async function aegisSetup(ctx, inputConfig, { portAdjustment = 0, workerMocks = {} }) {}
+export async function aegisSetup(ctx, inputConfig, { portAdjustment = 0, workerMocks = {}, env = undefined }) {}
 ```
-An async function to be invoked from the `setup` hook in your Aegis config file.
-This uses the provided configuration to create a new Miniflare instance.
+An `async` function to be invoked in your tests, for example from the `setup`
+hook in your Aegis config file. This uses the provided configuration to create
+a new Miniflare instance within which your tests can run.
 
 `inputConfig` can be one of:
-- A wrangler configuration file (in `TOML` or `JSONC` format)
+- A wrangler configuration file filename (in `TOML` or `JSONC` format)
 - An object with the structure of a parsed Wrangler configuration file
 
 Using the configuration, a Miniflare worker is configured, and the passed in
@@ -31,7 +71,7 @@ Using the configuration, a Miniflare worker is configured, and the passed in
 
 - `worker`: the actual Miniflare worker instance
 - `env`: an object that contains all of the configured bindings, as they would
-  be presented to you in a worker
+  be presented to you in a worker at runtime
 - `isServerListening`: a boolean that indicates if the configuration contained
   a port, in which case a development service will be started
 
@@ -44,8 +84,8 @@ to `true`:
 - `fetch`: a wrapped function on the `fetch()` method that allows fetching from
   URL fragments without needing to know the port (e.g `ctx.fetch('/api/thing')`)
 
-
 The configuration currently supports:
+- `vars` environment variables and secrets (see below)
 - `D1` databases
 - `R2` storage
 - `Durable Objects`
@@ -76,9 +116,8 @@ tests while a development server is running on the same machine.
 >
 > Should such a variable actually exist, its value will be left untouched.
 
-
 > ⚠️ **Warning**
-> Currently, there appear to be a bug in Miniflare that causes it static asset
+> Currently, there appears to be a bug in Miniflare that causes it static asset
 > handling to not work properly when a worker is defined; it should try to fetch
 > assets first, and then fall back to the main worker. However instead the asset
 > handler consumes all requests and will 404 on anything that is not an asset.
@@ -92,11 +131,13 @@ tests while a development server is running on the same machine.
 ```javascript
 export async function aegisTeardown(ctx) {}
 ```
-An async function to be called from the `teardown` hook in your Aegis config
-that aligns with the `setup` hook. It safely disposes of the Miniflare instance
-created by `aegisSetup` and removes from `ctx` all of the values added to it by
-`aegisSetup`.
+An async function that will safely shut down and dispose of a Miniflare
+worker instance created by `aegisSetup` and removes from the `ctx` all of the
+values that `aegisSetup` added to it.
 
+Generally you would call this from the `teardown` hook in your Aegis
+configuration file, although importantly you want to pair it with `aegisSetup`,
+however that gets called.
 
 ---
 
@@ -123,21 +164,107 @@ This augments the internal tests that are already available in Aegis.
   check for inequality instead.
 
 
-The `@odatnurd/cf-aegis/config` module exports the following function:
+### Specifying an Environment
 
+Wrangler configurations support multiple environments (e.g. `staging`,
+`production`), utilizing a mix of inheritable and non-inheritable keys. You can
+instruct `aegisSetup` to resolve the configuration for a specific environment
+by passing the `env` property in the helper options object.
 
-```javascript
-export function loadWranglerConfig(filename) {}
+This mimics using the `-e` / `--env` functionality of `wrangler` to specify the
+environment to run within.
+
+```js
+import { initializeCustomChecks, aegisSetup, aegisTeardown } from '@odatnurd/cf-aegis';
+
+initializeCustomChecks();
+
+export const config = {
+    files: [
+        "test/**/*.test.js",
+    ],
+    hooks: {
+        async setup(ctx) {
+            // This resolves the config exactly as `wrangler dev -e staging`
+            // would. Inheritable keys (like `main` and `compatibility_date`)
+            // fall back to the top-level. Non-inheritable keys (like `vars`,
+            // `d1_databases`, `secrets`) are strictly isolated to the
+            // 'staging' block.
+            await aegisSetup(ctx, './wrangler.jsonc', { env: 'staging' });
+        },
+
+        async teardown(ctx) {
+            await aegisTeardown(ctx);
+        },
+    },
+    failAction: "afterSection",
+}
 ```
-Given the path to a Wrangler configuration file (in either `TOML` or `JSONC`
-format), load the configuration and return the object back.
 
-This can be useful in cases where you want tests to be configured via the same
-Wrangler config that you use to develop and deploy your application, but you
-need to amend it prior to testing in some fashion.
+### Environment Variables and Secrets
+
+`cf-aegis` faithfully mimics Wrangler's native environment variable and secret
+loading mechanisms to ensure your tests run as closely to production as
+possible. However, to prevent inadvertently committing or leaking actual
+development secrets, the library looks for test-specific file names instead of
+the standard Wrangler defaults.
+
+This allows you to store your actual test configurations in your repository to
+facilitate testing, and act as an extra layer of documentation for what your
+worker actually expects.
+
+When `aegisSetup` is invoked, it will attempt to load environment variable
+files from the directory containing the passed configuration file; when invoked
+with an already loaded configuration file, the files will be loaded from the
+current working directory instead.
+
+**`.test.vars` files (Replaces `.dev.vars`)**
+
+These files take absolute precedence and are mutually exclusive; only one of
+the two will be loaded:
+
+* If an environment is specified in the call to aegisSetup, it looks for
+  `.test.vars.<envName>`.
+* If no environment is specified, or the specific file doesn't exist, it falls
+  back to `.test.vars`.
+
+As in Wrangler, if a `.test.vars` file of any type is loaded, `.test.env` files
+are ignored entirely and will not be loaded even if present.
+
+**`.test.env` files (Replaces `.env`)**
+
+If no `.test.vars` files are found, the system will fall back to loading
+`.test.env` files formatted using standard `dotenv` syntax. Unlike `.vars`
+files, these are merged together. Files appearing later in this list have
+higher precedence and will overwrite matching keys from earlier files that may
+have been loaded.
+
+1. `.test.env`
+2. `.test.env.<envName>`
+3. `.test.env.local`
+4. `.test.env.<envName>.local`
+
+> ℹ️ **Info**
+> Just like Wrangler, you can control the fallback behavior using process
+> environment variables.
+>
+> Setting `CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV="false"` will skip loading
+> `.test.env` files entirely.
+>
+> If no `.test.vars` files are found, setting
+> `CLOUDFLARE_INCLUDE_PROCESS_ENV="true"` will merge your entire system
+> `process.env` into the worker bindings.
+
+**Secrets Validation**
+
+If your Wrangler configuration defines a `secrets` key with a `required` array,
+`cf-aegis` will strictly filter all loaded variables. Only the keys explicitly
+listed in the `required` array will be injected into the worker's environment.
+Any required secrets not found in the loaded files will generate a warning log
+to the console.
 
 
-### Configuration Examples
+## Test Configuration Examples
 
 You can import the helper functions into your `aegis.config.js` file to easily
 set up a test environment. The `aegisSetup()` function accepts either an object
@@ -228,7 +355,7 @@ also supported:
 }
 ```
 
-Then the example becomes:
+When using a configuration file, the example becomes:
 
 ```js
 import { initializeCustomChecks, aegisSetup, aegisTeardown } from '@odatnurd/cf-aegis';
@@ -254,7 +381,7 @@ export const config = {
 ```
 
 
-#### Mocking Service Bindings
+## Mocking Service Bindings
 
 Should your configuration require that you bind to another worker, by default
 the binding will be set up such that all requests to that worker generate an
