@@ -17,6 +17,7 @@ initializeCustomChecks();
 export const config = {
   files: [
     "test/config.test.js",
+    "test/env.test.js",
     "test/setup.test.js",
     "test/fetch.test.js",
     "test/assets.test.js",
