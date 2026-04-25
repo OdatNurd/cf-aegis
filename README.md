@@ -2,17 +2,17 @@
 
 
 This package is a helper package that facilitates writing unit tests for a
-[Cloudflare Worker](https://developers.cloudflare.com/workers/) using the
-[Aegis](https://www.npmjs.com/package/@axel669/aegis) test library, for those
-that are not interested in using the
+[Cloudflare Worker](https://developers.cloudflare.com/workers/) using
+the [Aegis](https://www.npmjs.com/package/@axel669/aegis) test
+library, for those that are not interested in using the
 [Cloudflare Vitest Integration](https://developers.cloudflare.com/workers/testing/vitest-integration/)
 via [vitest](https://vitest.dev/).
 
 Behind the scenes,
-[Miniflare](https://developers.cloudflare.com/workers/testing/miniflare/) is
-used to run the worker in a manner consistent with how
-[Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-
-update/) would run it.
+[Miniflare](https://developers.cloudflare.com/workers/testing/miniflare/)
+is used to run the worker in a manner consistent with how
+[Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
+would run it.
 
 
 ## Requirements
@@ -56,7 +56,11 @@ import {
 ---
 
 ```javascript
-export async function aegisSetup(ctx, inputConfig, { portAdjustment = 0, workerMocks = {}, env = undefined }) {}
+export async function aegisSetup(ctx, inputConfig, {
+  portAdjustment = 0,
+  workerMocks = {},
+  env = undefined
+}) {}
 ```
 An `async` function to be invoked in your tests, for example from the `setup`
 hook in your Aegis config file. This uses the provided configuration to create
@@ -175,30 +179,17 @@ This mimics using the `-e` / `--env` functionality of `wrangler` to specify the
 environment to run within.
 
 ```js
-import { initializeCustomChecks, aegisSetup, aegisTeardown } from '@odatnurd/cf-aegis';
+import { aegisSetup, } from '@odatnurd/cf-aegis';
 
-initializeCustomChecks();
+// This resolves the config exactly as `wrangler dev -e staging`
+// would. Inheritable keys (like `main` and `compatibility_date`) fall
+// back to the top-level. Non-inheritable keys (like `vars`,
+// `d1_databases`, `secrets`) are strictly isolated to the 'staging'
+// block.
+await aegisSetup(ctx, './wrangler.jsonc', {
+  env: 'staging'
+});
 
-export const config = {
-    files: [
-        "test/**/*.test.js",
-    ],
-    hooks: {
-        async setup(ctx) {
-            // This resolves the config exactly as `wrangler dev -e staging`
-            // would. Inheritable keys (like `main` and `compatibility_date`)
-            // fall back to the top-level. Non-inheritable keys (like `vars`,
-            // `d1_databases`, `secrets`) are strictly isolated to the
-            // 'staging' block.
-            await aegisSetup(ctx, './wrangler.jsonc', { env: 'staging' });
-        },
-
-        async teardown(ctx) {
-            await aegisTeardown(ctx);
-        },
-    },
-    failAction: "afterSection",
-}
 ```
 
 ### Environment Variables and Secrets
@@ -278,7 +269,11 @@ bucket; they appear in the `ctx` as `ctx.env.DB` and `ctx.env.BUCKET`
 respectively.
 
 ```js
-import { initializeCustomChecks, aegisSetup, aegisTeardown } from '@odatnurd/cf-aegis';
+import {
+  initializeCustomChecks,
+  aegisSetup,
+  aegisTeardown
+} from '@odatnurd/cf-aegis';
 
 initializeCustomChecks();
 
@@ -331,7 +326,7 @@ binding = "BUCKET"
 bucket_name = "test-bucket"
 ```
 
-or if you prefer to not use `Toms Obnoxious Malformed Language`, `JSONC` is
+or if you prefer to not use `Tom's Obnoxious Malformed Language`, `JSONC` is
 also supported:
 
 ```jsonc
@@ -355,29 +350,12 @@ also supported:
 }
 ```
 
-When using a configuration file, the example becomes:
+Using a configuration file, the previous configuration example becomes much
+simpler:
 
 ```js
-import { initializeCustomChecks, aegisSetup, aegisTeardown } from '@odatnurd/cf-aegis';
-
-initializeCustomChecks();
-
-export const config = {
-    files: [
-        "test/**/*.test.js",
-    ],
-    hooks: {
-        async setup(ctx) {
-            // You can use either 'wrangler.toml' or 'wrangler.jsonc' here
-            await aegisSetup(ctx, './wrangler.toml');
-        },
-
-        async teardown(ctx) {
-            await aegisTeardown(ctx);
-        },
-    },
-    failAction: "afterSection",
-}
+// You can use either 'wrangler.toml' or 'wrangler.jsonc' here.
+await aegisSetup(ctx, './wrangler.toml');
 ```
 
 
@@ -395,43 +373,29 @@ as in this example or by providing a `scriptPath` instead to point at a file,
 should the mock be more complex.
 
 ```js
-import { initializeCustomChecks, aegisSetup, aegisTeardown } from '@odatnurd/cf-aegis';
+// Define the inline configuration for the main worker; this could of
+// course also be specified to the configuration as a filename of a
+// wrangler file.
+const config = {
+  services: [{
+    // The name of the binding; e.g. ctx.env.LOG_SERVICE
+    binding: 'LOG_SERVICE',
+    service: 'log-service'
+  }]
+};
 
-initializeCustomChecks();
+const workerMocks = {
+  'log-service': {
+    // It is also possible to use scriptPath instead to provide a
+    // source file, for a more complex mock:
+    //     scriptPath: './path/to/mock-worker.js'
+    script: `export default {
+      fetch(request) {
+        return new Response('Success', { status: 200 });
+      }
+    }`
+  }
+};
 
-export const config = {
-    files: [
-        "test/**/*.test.js",
-    ],
-    hooks: {
-        async setup(ctx) {
-            // Define the inline configuration for the main worker
-            const config = {
-              services: [{
-                // The name of the binding; e.g. ctx.env.LOG_SERVICE
-                binding: 'LOG_SERVICE',
-                service: 'log-service'
-              }]
-            };
-
-            const workerMocks = {
-              'log-service': {
-                // For a more complex mock, you can use scriptPath: './path/to/mock-worker.js'
-                script: `export default {
-                  fetch(request) {
-                    return new Response('Success', { status: 200 });
-                  }
-                }`
-              }
-            };
-
-            await aegisSetup(ctx, config, { workerMocks });
-        },
-
-        async teardown(ctx) {
-            await aegisTeardown(ctx);
-        },
-    },
-    failAction: "afterSection",
-}
+await aegisSetup(ctx, config, { workerMocks });
 ```
