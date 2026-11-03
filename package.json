@@ -31,13 +31,13 @@
   "devDependencies": {
     "@axel669/aegis": "^0.3.1",
     "json5": "^2.2.3",
-    "miniflare": "^4.20260421.0",
+    "miniflare": "^4.20260730.0",
     "smol-toml": "^1.6.1"
   },
   "peerDependencies": {
     "@axel669/aegis": "^0.3.1",
     "json5": "^2.2.3",
-    "miniflare": "^4.20260421.0",
+    "miniflare": "^4.20260730.0",
     "smol-toml": "^1.6.1"
   },
   "dependencies": {
