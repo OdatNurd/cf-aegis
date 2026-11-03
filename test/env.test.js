@@ -234,6 +234,27 @@ export default Collection`Environment Variable Loading`({
     $check`Unrequired variables are discarded`
       .value(secretsBindings.DEV_ONLY)
       .eq($, undefined);
+
+    // The loader logs the variables that it loaded for debugging. Required
+    // secrets must remain visible by name, but their values must never appear.
+    const logs = [];
+    const originalLog = console.log;
+    console.log = (...args) => logs.push(args.join(' '));
+    try {
+      simulateAegisLoad(testDir2, 'dev', 'wrangler-secrets.jsonc');
+    } finally {
+      console.log = originalLog;
+    }
+
+    const output = logs.join('\n');
+    $check`Required secrets are logged with a redacted value`
+      .value(output)
+      .includes($, 'BASE_ONLY = [redacted]')
+      .includes($, 'LOCAL_ONLY = [redacted]');
+
+    $check`Required secret values are not logged`
+      .value(output.includes('base_val') || output.includes('local_val'))
+      .eq($, false);
   },
 
 
@@ -266,11 +287,20 @@ export default Collection`Environment Variable Loading`({
   "Include Process Environment": ({ runScope }) => {
     process.env.CLOUDFLARE_INCLUDE_PROCESS_ENV = 'true';
     process.env.AEGIS_CROSS_PLATFORM_TEST = 'active';
+    process.env.BASE_ONLY = 'process-secret';
 
     try {
       // Use the empty config. .test.env files WILL still load alongside
       // the process environment variables.
-      const processBindings = simulateAegisLoad(testDir2, 'dev', 'wrangler-empty.jsonc');
+      const logs = [];
+      const originalLog = console.log;
+      console.log = (...args) => logs.push(args.join(' '));
+      let processBindings;
+      try {
+        processBindings = simulateAegisLoad(testDir2, 'dev', 'wrangler-empty.jsonc');
+      } finally {
+        console.log = originalLog;
+      }
 
       $check`Explicit cross-platform process variable is loaded`
         .value(processBindings.AEGIS_CROSS_PLATFORM_TEST)
@@ -278,10 +308,20 @@ export default Collection`Environment Variable Loading`({
 
       $check`Standard .env files still load alongside process env`
         .value(processBindings.BASE_ONLY)
-        .eq($, 'base_val');
+        .eq($, 'process-secret');
+
+      const output = logs.join('\n');
+      $check`Process-env overrides are labelled without printing their value`
+        .value(output)
+        .includes($, 'BASE_ONLY = [from process.env]');
+
+      $check`Process-env values never appear in the debug output`
+        .value(output.includes('process-secret'))
+        .eq($, false);
     } finally {
       delete process.env.CLOUDFLARE_INCLUDE_PROCESS_ENV;
       delete process.env.AEGIS_CROSS_PLATFORM_TEST;
+      delete process.env.BASE_ONLY;
     }
   }
 });
