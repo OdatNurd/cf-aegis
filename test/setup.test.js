@@ -72,6 +72,31 @@ export default Collection`Aegis Setup and Teardown`({
   /****************************************************************************/
 
 
+  /* This section verifies that a failed setup does not leave partial values
+   * or a live Miniflare instance in the context. */
+  "Setup Failure Cleanup": async ({ runScope }) => {
+    const ctx = {};
+    let error;
+
+    try {
+      await aegisSetup(ctx, { main: './definitely-missing-worker.js' });
+    } catch (caught) {
+      error = caught;
+    }
+
+    $check`Invalid worker setup reports an error`
+      .value(error instanceof Error)
+      .eq($, true);
+
+    $check`Failed setup leaves the context empty`
+      .value(ctx)
+      .deepEquals($, {});
+  },
+
+
+  /****************************************************************************/
+
+
   /* This section verifies that the CF_AEGIS environment variable is correctly
    * injected into the worker bindings, and that it does not overwrite a
    * value if the user explicitly configured one. */
