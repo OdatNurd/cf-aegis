@@ -334,9 +334,8 @@ export default Collection`Wrangler Configuration Parsing`({
   /****************************************************************************/
 
 
-  /* This section tests that the secrets configuration is correctly mapped,
-   * specifically ensuring that only the 'required' array is passed through and
-   * that improperly formatted secrets are safely ignored. */
+  /* The secrets list is consumed by the environment loader for filtering; it
+   * must not be forwarded to Miniflare as a worker option. */
   "Secrets Configuration": ({ runScope }) => {
     // Valid case: secrets.required is an array
     const validConfig = {
@@ -351,15 +350,12 @@ export default Collection`Wrangler Configuration Parsing`({
         {
           name: 'main',
           modules: true,
-          bindings: {},
-          secrets: {
-            required: ['API_KEY', 'OTHER_SECRET']
-          }
+          bindings: {}
         }
       ]
     };
 
-    $check`Valid secrets array is mapped correctly`
+    $check`Secrets config is not forwarded to Miniflare options`
       .value(createMiniflareOptions(validConfig, {}))
       .deepEquals($, validExpected);
 
@@ -429,7 +425,6 @@ export default Collection`Wrangler Configuration Parsing`({
           scriptPath: './worker.js',
           compatibilityDate: '2025-01-01',
           bindings: { ENV: 'production' },
-          secrets: { required: ['MY_SECRET'] },
           assets: { binding: 'ASSETS', directory: './dist' },
           kvNamespaces: ['KV'],
           r2Buckets: ['R2'],
