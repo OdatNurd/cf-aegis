@@ -72,6 +72,62 @@ export default Collection`Aegis Setup and Teardown`({
   /****************************************************************************/
 
 
+  /* This section verifies that invalid port values fail clearly before a
+   * Miniflare instance is created. */
+  "Port Validation": async ({ runScope }) => {
+    const invalidPort = {};
+    let invalidPortError;
+    try {
+      await aegisSetup(invalidPort, { dev: { port: '9002' } });
+    } catch (caught) {
+      invalidPortError = caught;
+    }
+
+    $check`String dev.port is rejected`
+      .value(invalidPortError instanceof TypeError)
+      .eq($, true);
+
+    $check`Invalid dev.port leaves the context empty`
+      .value(invalidPort)
+      .deepEquals($, {});
+
+    const invalidAdjustment = {};
+    let invalidAdjustmentError;
+    try {
+      await aegisSetup(invalidAdjustment, { dev: { port: 9002 } }, {
+        portAdjustment: '1'
+      });
+    } catch (caught) {
+      invalidAdjustmentError = caught;
+    }
+
+    $check`Non-integer portAdjustment is rejected`
+      .value(invalidAdjustmentError instanceof TypeError)
+      .eq($, true);
+
+    const outOfRange = {};
+    let outOfRangeError;
+    try {
+      await aegisSetup(outOfRange, { dev: { port: 9002 } }, {
+        portAdjustment: 65000
+      });
+    } catch (caught) {
+      outOfRangeError = caught;
+    }
+
+    $check`Out-of-range adjusted port is rejected`
+      .value(outOfRangeError instanceof RangeError)
+      .eq($, true);
+
+    $check`Out-of-range setup leaves the context empty`
+      .value(outOfRange)
+      .deepEquals($, {});
+  },
+
+
+  /****************************************************************************/
+
+
   /* This section verifies that a failed setup does not leave partial values
    * or a live Miniflare instance in the context. */
   "Setup Failure Cleanup": async ({ runScope }) => {
