@@ -16,6 +16,7 @@ export default Collection`Static Assets`({
   "Asset Fetching": async ({ runScope }) => {
     const ctx = {};
     const expected = await readFile("./test/worker/public/test.txt", "utf-8");
+    const expectedWebp = await readFile("./test/worker/public/test.webp", "utf-8");
 
     // Initialize with the static-specific configuration
     await aegisSetup(ctx, './test/worker/wrangler_static.toml');
@@ -34,6 +35,19 @@ export default Collection`Static Assets`({
         return { status: res.status };
       })
       .eq($.status, 404);
+
+    await $check`Non-text assets receive their mime-db content type`
+      .call(async () => {
+        const res = await ctx.fetch('/test.webp');
+        return {
+          status: res.status,
+          contentType: res.headers.get('content-type'),
+          text: await res.text()
+        };
+      })
+      .eq($.status, 200)
+      .eq($.contentType, 'image/webp')
+      .eq($.text, expectedWebp);
 
     await aegisTeardown(ctx);
   },
