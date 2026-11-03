@@ -3,7 +3,10 @@
 
 import { Collection, $check, $ } from "@axel669/aegis";
 
-import { createMiniflareOptions } from "../lib/miniflare.js";
+import {
+  createMiniflareOptions,
+  applyAssetRouterWorkaround
+} from "../lib/miniflare.js";
 import { resolveEnvironmentConfig } from "../lib/config.js";
 
 
@@ -137,6 +140,38 @@ export default Collection`Wrangler Configuration Parsing`({
   /****************************************************************************/
 
 
+  /* This section verifies that the internal asset worker names do not collide
+   * with user-defined service workers. */
+  "Asset Workaround Worker Names": ({ runScope }) => {
+    const workers = [
+      {
+        name: 'main',
+        modules: true,
+        bindings: {},
+        assets: { binding: 'ASSETS', directory: './public' }
+      },
+      { name: 'asset-router', modules: true, script: '' },
+      { name: 'asset-store', modules: true, script: '' }
+    ];
+
+    applyAssetRouterWorkaround(workers);
+
+    const names = workers.map(worker => worker.name);
+    $check`Asset workaround uses unique worker names`
+      .value(new Set(names).size)
+      .eq($, names.length)
+      .eq($, 5);
+
+    $check`Asset workaround renames both colliding helpers`
+      .value(names)
+      .includes($, 'asset-router-2')
+      .includes($, 'asset-store-2');
+  },
+
+
+  /****************************************************************************/
+
+
   /* This section tests bindings that are defined as an array of objects in the
    * wrangler config but are expected as a simple array of binding names by
    * Miniflare. */
@@ -261,6 +296,38 @@ export default Collection`Wrangler Configuration Parsing`({
       .value(unmockedWorker)
       .instanceof($.script, String)
       .neq($.script, workerMocks['my-mocked-worker'].script);
+  },
+
+
+  /****************************************************************************/
+
+
+  /* This section verifies that two bindings to the same service produce only
+   * one service worker while preserving both bindings. */
+  "Duplicate Service Bindings": ({ runScope }) => {
+    const config = {
+      services: [
+        { binding: 'FIRST_SERVICE', service: 'shared-service' },
+        { binding: 'SECOND_SERVICE', service: 'shared-service' }
+      ]
+    };
+
+    const result = createMiniflareOptions(config, {
+      'shared-service': {
+        script: `export default { fetch: () => new Response("shared") }`
+      }
+    });
+
+    $check`Duplicate service bindings produce one worker`
+      .value(result.workers.map(worker => worker.name))
+      .deepEquals($, ['main', 'shared-service']);
+
+    $check`Both bindings to the shared service are retained`
+      .value(result.workers[0].serviceBindings)
+      .deepEquals($, {
+        FIRST_SERVICE: 'shared-service',
+        SECOND_SERVICE: 'shared-service'
+      });
   },
 
 
