@@ -18,7 +18,8 @@ export default Collection`Mixed Worker & Assets`({
     const expected = await readFile("./test/worker/public/test.txt", "utf-8");
 
     // Initialize with the mixed configuration
-    await aegisSetup(ctx, './test/worker/wrangler_mixed.toml');
+    try {
+      await aegisSetup(ctx, './test/worker/wrangler_mixed.toml');
 
     await $check`Fetch of existing asset succeeds with correct content`
       .call(async () => {
@@ -90,7 +91,9 @@ export default Collection`Mixed Worker & Assets`({
       .eq($.headLength, String(Buffer.byteLength(expected)))
       .eq($.headText, '');
 
-    await aegisTeardown(ctx);
+    } finally {
+      await aegisTeardown(ctx);
+    }
   },
 
 
@@ -101,7 +104,8 @@ export default Collection`Mixed Worker & Assets`({
    * correctly alongside the asset serving. */
   "Worker Route Fetching": async ({ runScope }) => {
     const ctx = {};
-    await aegisSetup(ctx, './test/worker/wrangler_mixed.toml');
+    try {
+      await aegisSetup(ctx, './test/worker/wrangler_mixed.toml');
 
     // 1. Wrapped Context Fetch
     await $check`Inner fetch with fragment succeeds on valid worker route`
@@ -132,7 +136,9 @@ export default Collection`Mixed Worker & Assets`({
       .eq($.status, 200)
       .eq($.text, 'Hello World');
 
-    await aegisTeardown(ctx);
+    } finally {
+      await aegisTeardown(ctx);
+    }
   },
 
 
@@ -146,7 +152,8 @@ export default Collection`Mixed Worker & Assets`({
     const ctx = {};
     const expected = await readFile("./test/worker/public/test.txt", "utf-8");
 
-    await aegisSetup(ctx, './test/worker/wrangler_mixed.toml');
+    try {
+      await aegisSetup(ctx, './test/worker/wrangler_mixed.toml');
 
     await $check`Worker can fetch existing asset via binding`
       .call(async () => {
@@ -163,7 +170,9 @@ export default Collection`Mixed Worker & Assets`({
       })
       .eq($.status, 404);
 
-    await aegisTeardown(ctx);
+    } finally {
+      await aegisTeardown(ctx);
+    }
   },
 });
 

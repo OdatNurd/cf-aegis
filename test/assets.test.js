@@ -19,7 +19,8 @@ export default Collection`Static Assets`({
     const expectedWebp = await readFile("./test/worker/public/test.webp", "utf-8");
 
     // Initialize with the static-specific configuration
-    await aegisSetup(ctx, './test/worker/wrangler_static.toml');
+    try {
+      await aegisSetup(ctx, './test/worker/wrangler_static.toml');
 
     await $check`Fetch of existing asset succeeds with correct content`
       .call(async () => {
@@ -49,7 +50,9 @@ export default Collection`Static Assets`({
       .eq($.contentType, 'image/webp')
       .eq($.text, expectedWebp);
 
-    await aegisTeardown(ctx);
+    } finally {
+      await aegisTeardown(ctx);
+    }
   },
 });
 

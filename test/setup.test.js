@@ -21,7 +21,8 @@ export default Collection`Aegis Setup and Teardown`({
     const ctx = {};
 
     // Run the setup function with the empty config.
-    await aegisSetup(ctx);
+    try {
+      await aegisSetup(ctx);
 
     // Verify that the setup function populated the context object with all
     // of the expected default properties.
@@ -33,8 +34,10 @@ export default Collection`Aegis Setup and Teardown`({
       .eq($.isServerListening, false)
       .eq($.serverBaseUrl, undefined);
 
-    // Run the teardown function to clean up the context.
-    await aegisTeardown(ctx);
+    } finally {
+      // Always dispose of the worker, even if a check above fails.
+      await aegisTeardown(ctx);
+    }
 
     // Verify that the teardown function has completely emptied the context
     // object, returning it to its original state.
@@ -54,14 +57,16 @@ export default Collection`Aegis Setup and Teardown`({
    * with the rest of the values that setup adds to the context. */
   "Server Port Teardown": async ({ runScope }) => {
     const ctx = {};
-    await aegisSetup(ctx, './test/worker/wrangler.toml');
+    try {
+      await aegisSetup(ctx, './test/worker/wrangler.toml');
 
-    $check`Configured server port is exposed during the test`
-      .value(ctx)
-      .eq($.serverPort, 9002)
-      .eq($.isServerListening, true);
-
-    await aegisTeardown(ctx);
+      $check`Configured server port is exposed during the test`
+        .value(ctx)
+        .eq($.serverPort, 9002)
+        .eq($.isServerListening, true);
+    } finally {
+      await aegisTeardown(ctx);
+    }
 
     $check`Server port and all other setup values are removed at teardown`
       .value(ctx)
@@ -161,25 +166,29 @@ export default Collection`Aegis Setup and Teardown`({
 
     // Provide an empty config, which should result in CF_AEGIS being injected
     // with the default value of 'true'.
-    await aegisSetup(ctx1, {});
+    try {
+      await aegisSetup(ctx1, {});
 
-    $check`CF_AEGIS is injected as 'true' by default`
-      .value(ctx1.env)
-      .eq($.CF_AEGIS, 'true');
-
-    await aegisTeardown(ctx1);
+      $check`CF_AEGIS is injected as 'true' by default`
+        .value(ctx1.env)
+        .eq($.CF_AEGIS, 'true');
+    } finally {
+      await aegisTeardown(ctx1);
+    }
 
     const ctx2 = {};
 
     // Provide a config that explicitly sets a value for CF_AEGIS, which should
     // bypass the injection and keep the configured value.
-    await aegisSetup(ctx2, { vars: { CF_AEGIS: 'custom-value' } });
+    try {
+      await aegisSetup(ctx2, { vars: { CF_AEGIS: 'custom-value' } });
 
-    $check`Pre-existing CF_AEGIS is not overwritten`
-      .value(ctx2.env)
-      .eq($.CF_AEGIS, 'custom-value');
-
-    await aegisTeardown(ctx2);
+      $check`Pre-existing CF_AEGIS is not overwritten`
+        .value(ctx2.env)
+        .eq($.CF_AEGIS, 'custom-value');
+    } finally {
+      await aegisTeardown(ctx2);
+    }
   },
 
 
@@ -206,9 +215,10 @@ export default Collection`Aegis Setup and Teardown`({
       },
     };
 
-    await aegisSetup(ctx, './test/worker/wrangler.toml', { workerMocks });
+    try {
+      await aegisSetup(ctx, './test/worker/wrangler.toml', { workerMocks });
 
-    await $check`Injected CF_AEGIS variable is present in the loaded configuration`
+      await $check`Injected CF_AEGIS variable is present in the loaded configuration`
       .value(ctx.env)
       .eq($.CF_AEGIS, 'true');
 
@@ -294,10 +304,11 @@ export default Collection`Aegis Setup and Teardown`({
         const logText = await logRes.text();
         return { authText, logText };
       })
-      .eq($.authText, 'Mocked Auth Service Response')
-      .eq($.logText, 'Service not implemented in test environment');
-
-    await aegisTeardown(ctx);
+        .eq($.authText, 'Mocked Auth Service Response')
+        .eq($.logText, 'Service not implemented in test environment');
+    } finally {
+      await aegisTeardown(ctx);
+    }
   },
 
 
@@ -315,9 +326,10 @@ export default Collection`Aegis Setup and Teardown`({
       .deepEquals($, jsoncConfig);
 
     const ctx = {};
-    await aegisSetup(ctx, './test/worker/wrangler_static.toml');
+    try {
+      await aegisSetup(ctx, './test/worker/wrangler_static.toml');
 
-    const assetContent = fs.readFileSync('./test/worker/public/test.txt', 'utf8');
+      const assetContent = fs.readFileSync('./test/worker/public/test.txt', 'utf8');
 
     await $check`Static asset is served correctly`
       .call(async () => {
@@ -327,10 +339,11 @@ export default Collection`Aegis Setup and Teardown`({
           text: await res.text()
         };
       })
-      .eq($.status, 200)
-      .eq($.text, assetContent);
-
-    await aegisTeardown(ctx);
+        .eq($.status, 200)
+        .eq($.text, assetContent);
+    } finally {
+      await aegisTeardown(ctx);
+    }
   },
 });
 

@@ -14,7 +14,8 @@ export default Collection`Worker Route Fetching`({
    * into the context works as expected. */
   "Wrapped Fetch": async ({ runScope }) => {
     const ctx = {};
-    await aegisSetup(ctx, './test/worker/wrangler.toml');
+    try {
+      await aegisSetup(ctx, './test/worker/wrangler.toml');
 
     await $check`Inner fetch with fragment succeeds on valid route`
       .call(async () => {
@@ -50,7 +51,9 @@ export default Collection`Worker Route Fetching`({
       .eq($.status, 404)
       .eq($.text, 'Not found');
 
-    await aegisTeardown(ctx);
+    } finally {
+      await aegisTeardown(ctx);
+    }
   },
 
 
@@ -61,7 +64,8 @@ export default Collection`Worker Route Fetching`({
    * Miniflare dispatchFetch() handler. */
   "Miniflare Dispatch": async ({ runScope }) => {
     const ctx = {};
-    await aegisSetup(ctx, './test/worker/wrangler.toml');
+    try {
+      await aegisSetup(ctx, './test/worker/wrangler.toml');
 
     await $check`Raw fetch with fragment succeeds on valid route`
       .call(async () => {
@@ -99,7 +103,9 @@ export default Collection`Worker Route Fetching`({
       .eq($.status, 404)
       .eq($.text, 'Not found');
 
-    await aegisTeardown(ctx);
+    } finally {
+      await aegisTeardown(ctx);
+    }
   },
 
 
@@ -110,7 +116,8 @@ export default Collection`Worker Route Fetching`({
    * this, as an extra test. */
   "Node Fetch": async ({ runScope }) => {
     const ctx = {};
-    await aegisSetup(ctx, './test/worker/wrangler.toml');
+    try {
+      await aegisSetup(ctx, './test/worker/wrangler.toml');
 
     await $check`Node fetch succeeds on valid route`
       .call(async () => {
@@ -130,7 +137,9 @@ export default Collection`Worker Route Fetching`({
       .eq($.status, 404)
       .eq($.text, 'Not found');
 
-    await aegisTeardown(ctx);
+    } finally {
+      await aegisTeardown(ctx);
+    }
   },
 });
 
