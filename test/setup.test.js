@@ -50,6 +50,31 @@ export default Collection`Aegis Setup and Teardown`({
   /* This section verifies that the CF_AEGIS environment variable is correctly
    * injected into the worker bindings, and that it does not overwrite a
    * value if the user explicitly configured one. */
+  /* This section verifies that a configured server port is removed along
+   * with the rest of the values that setup adds to the context. */
+  "Server Port Teardown": async ({ runScope }) => {
+    const ctx = {};
+    await aegisSetup(ctx, './test/worker/wrangler.toml');
+
+    $check`Configured server port is exposed during the test`
+      .value(ctx)
+      .eq($.serverPort, 9002)
+      .eq($.isServerListening, true);
+
+    await aegisTeardown(ctx);
+
+    $check`Server port and all other setup values are removed at teardown`
+      .value(ctx)
+      .deepEquals($, {});
+  },
+
+
+  /****************************************************************************/
+
+
+  /* This section verifies that the CF_AEGIS environment variable is correctly
+   * injected into the worker bindings, and that it does not overwrite a
+   * value if the user explicitly configured one. */
   "CF_AEGIS Environment Variable": async ({ runScope }) => {
     const ctx1 = {};
 
