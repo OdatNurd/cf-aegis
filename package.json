@@ -40,15 +40,6 @@
     "miniflare": "^4.20260421.0",
     "smol-toml": "^1.6.1"
   },
-  "peerDependenciesMeta": {
-    "@axel669/aegis": {
-      "optional": true
-    },
-    "miniflare": {
-      "optional": true
-    }
-  },
-  "packageManager": "pnpm@11.6.0",
   "dependencies": {
     "mime-db": "^1.54.0"
   }
