@@ -35,6 +35,61 @@ export default Collection`Mixed Worker & Assets`({
       })
       .eq($.status, 404);
 
+    await $check`POST to an asset path falls through to the user worker`
+      .call(async () => {
+        const res = await ctx.fetch('/test.txt', { method: 'POST' });
+        return { status: res.status, text: await res.text() };
+      })
+      .eq($.status, 404)
+      .eq($.text, 'Not found');
+
+    await $check`Asset responses support range, conditional, and HEAD requests`
+      .call(async () => {
+        const base = await ctx.fetch('/test.txt');
+        const etag = base.headers.get('etag');
+        const range = await ctx.fetch('/test.txt', {
+          headers: { Range: 'bytes=0-3' }
+        });
+        const conditional = await ctx.fetch('/test.txt', {
+          headers: { 'If-None-Match': etag }
+        });
+        const unsatisfiable = await ctx.fetch('/test.txt', {
+          headers: { Range: 'bytes=9999-10000' }
+        });
+        const head = await ctx.fetch('/test.txt', { method: 'HEAD' });
+        const byteLength = Buffer.byteLength(expected);
+
+        return {
+          baseStatus: base.status,
+          acceptRanges: base.headers.get('accept-ranges'),
+          etagPresent: typeof etag === 'string' && etag.startsWith('"'),
+          rangeStatus: range.status,
+          rangeText: await range.text(),
+          rangeContentRange: range.headers.get('content-range'),
+          conditionalStatus: conditional.status,
+          conditionalText: await conditional.text(),
+          unsatisfiableStatus: unsatisfiable.status,
+          unsatisfiableContentRange: unsatisfiable.headers.get('content-range'),
+          headStatus: head.status,
+          headLength: head.headers.get('content-length'),
+          headText: await head.text(),
+          byteLength
+        };
+      })
+      .eq($.baseStatus, 200)
+      .eq($.acceptRanges, 'bytes')
+      .eq($.etagPresent, true)
+      .eq($.rangeStatus, 206)
+      .eq($.rangeText, expected.slice(0, 4))
+      .eq($.rangeContentRange, `bytes 0-3/${Buffer.byteLength(expected)}`)
+      .eq($.conditionalStatus, 304)
+      .eq($.conditionalText, '')
+      .eq($.unsatisfiableStatus, 416)
+      .eq($.unsatisfiableContentRange, `bytes */${Buffer.byteLength(expected)}`)
+      .eq($.headStatus, 200)
+      .eq($.headLength, String(Buffer.byteLength(expected)))
+      .eq($.headText, '');
+
     await aegisTeardown(ctx);
   },
 
