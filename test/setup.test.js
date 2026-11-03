@@ -50,9 +50,6 @@ export default Collection`Aegis Setup and Teardown`({
   /****************************************************************************/
 
 
-  /* This section verifies that the CF_AEGIS environment variable is correctly
-   * injected into the worker bindings, and that it does not overwrite a
-   * value if the user explicitly configured one. */
   /* This section verifies that a configured server port is removed along
    * with the rest of the values that setup adds to the context. */
   "Server Port Teardown": async ({ runScope }) => {

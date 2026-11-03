@@ -67,7 +67,7 @@ hook in your Aegis config file. This uses the provided configuration to create
 a new Miniflare instance within which your tests can run.
 
 `inputConfig` can be one of:
-- A wrangler configuration file filename (in `TOML` or `JSONC` format)
+- A wrangler configuration file filename (in `TOML`, `JSON`, or `JSONC` format)
 - An object with the structure of a parsed Wrangler configuration file
 
 Using the configuration, a Miniflare worker is configured, and the passed in
@@ -98,6 +98,13 @@ The configuration currently supports:
 - `Static Assets` (see below)
 - `Service Bindings`
 
+The loader intentionally supports a subset of Wrangler configuration. The
+following are not currently mapped and are silently ignored:
+`analytics_engine_datasets`, `vectorize`, `hyperdrive`, `browser`, `ai`,
+`mtls_certificates`, `dispatch_namespaces`, `send_email`, `workflows`, queue
+consumer tuning options, service `entrypoint`, and D1/R2/KV preview
+identifiers.
+
 When using `service bindings`, all services will, by default, be mocked to
 include a `fetch` handler that generates an error response saying the service
 is not mocked. This facilitates testing in cases where the bound services are
@@ -121,7 +128,7 @@ tests while a development server is running on the same machine.
 > Should such a variable actually exist, its value will be left untouched.
 
 > ⚠️ **Warning**
-> Currently, there appears to be a bug in Miniflare that causes it static asset
+> Currently, there appears to be a bug in Miniflare that causes its static asset
 > handling to not work properly when a worker is defined; it should try to fetch
 > assets first, and then fall back to the main worker. However instead the asset
 > handler consumes all requests and will 404 on anything that is not an asset.
@@ -254,6 +261,9 @@ listed in the `required` array will be injected into the worker's environment.
 Any required secrets not found in the loaded files will generate a warning log
 to the console.
 
+When loaded values are printed for debugging, required secret values are
+replaced with `[redacted]` and values sourced from `process.env` are not shown.
+
 
 ## Test Configuration Examples
 
@@ -326,8 +336,8 @@ binding = "BUCKET"
 bucket_name = "test-bucket"
 ```
 
-or if you prefer to not use `Tom's Obnoxious Malformed Language`, `JSONC` is
-also supported:
+or if you prefer to not use `Tom's Obnoxious Malformed Language`, `JSON` and
+`JSONC` are also supported:
 
 ```jsonc
 {
@@ -354,7 +364,7 @@ Using a configuration file, the previous configuration example becomes much
 simpler:
 
 ```js
-// You can use either 'wrangler.toml' or 'wrangler.jsonc' here.
+// You can use 'wrangler.toml', 'wrangler.json', or 'wrangler.jsonc' here.
 await aegisSetup(ctx, './wrangler.toml');
 ```
 
