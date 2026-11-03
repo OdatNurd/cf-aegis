@@ -192,10 +192,12 @@ export default Collection`Aegis Setup and Teardown`({
   "Handles Full Configuration (No Assets)": async ({ runScope }) => {
     const tomlConfig = loadWranglerConfig('./test/worker/wrangler.toml');
     const jsoncConfig = loadWranglerConfig('./test/worker/wrangler.jsonc');
+    const jsonConfig = loadWranglerConfig('./test/worker/wrangler.json');
 
-    await $check`TOML and JSONC configs are structurally identical`
+    await $check`TOML, JSONC, and JSON configs are structurally identical`
       .value(tomlConfig)
-      .deepEquals($, jsoncConfig);
+      .deepEquals($, jsoncConfig)
+      .deepEquals($, jsonConfig);
 
     const ctx = {};
     const workerMocks = {
