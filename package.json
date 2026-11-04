@@ -32,13 +32,13 @@
     "@axel669/aegis": "^0.3.1",
     "json5": "^2.2.3",
     "miniflare": "^4.20260730.0",
-    "smol-toml": "^1.6.1"
+    "smol-toml": "^1.9.1"
   },
   "peerDependencies": {
     "@axel669/aegis": "^0.3.1",
     "json5": "^2.2.3",
     "miniflare": "^4.20260730.0",
-    "smol-toml": "^1.6.1"
+    "smol-toml": "^1.9.1"
   },
   "dependencies": {
     "mime-db": "^1.54.0"
