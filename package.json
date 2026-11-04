@@ -42,5 +42,6 @@
   },
   "dependencies": {
     "mime-db": "^1.54.0"
-  }
+  },
+  "packageManager": "pnpm@11.6.0"
 }
