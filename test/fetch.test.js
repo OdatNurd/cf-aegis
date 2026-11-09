@@ -1,146 +1,122 @@
 /******************************************************************************/
 
 
-import { Collection, $check, $ } from "@axel669/aegis";
+import { aegis, $ } from "@axel669/aegis";
 
-import { aegisSetup, aegisTeardown } from "../lib/index.js";
+import { aegisSetup, aegisTeardown, initializeCustomChecks } from "../lib/index.js";
+
+
+initializeCustomChecks();
 
 
 /******************************************************************************/
 
 
-export default Collection`Worker Route Fetching`({
-  /* This section performs tests to ensure that the fetch handler that we wrap
-   * into the context works as expected. */
-  "Wrapped Fetch": async ({ runScope }) => {
-    const ctx = {};
-    try {
-      await aegisSetup(ctx, './test/worker/wrangler.toml');
-
-    await $check`Inner fetch with fragment succeeds on valid route`
-      .call(async () => {
-        const res = await ctx.fetch('/test');
-        return { status: res.status, text: await res.text() };
-      })
-      .eq($.status, 200)
-      .eq($.text, 'Hello World');
-
-    await $check`Inner fetch with fragment fails on invalid route`
-      .call(async () => {
-        const res = await ctx.fetch('/non-existent-route');
-        return { status: res.status, text: await res.text() };
-      })
-      .eq($.status, 404)
-      .eq($.text, 'Not found');
-
-    await $check`Inner fetch with full URL succeeds on valid route`
-      .call(async () => {
-        const url = new URL('/test', ctx.serverBaseUrl).toString();
-        const res = await ctx.fetch(url);
-        return { status: res.status, text: await res.text() };
-      })
-      .eq($.status, 200)
-      .eq($.text, 'Hello World');
-
-    await $check`Inner fetch with full URL fails on invalid route`
-      .call(async () => {
-        const url = new URL('/non-existent-route', ctx.serverBaseUrl).toString();
-        const res = await ctx.fetch(url);
-        return { status: res.status, text: await res.text() };
-      })
-      .eq($.status, 404)
-      .eq($.text, 'Not found');
-
-    } finally {
-      await aegisTeardown(ctx);
-    }
-  },
+export const name = "Worker Route Fetching";
 
 
-  /****************************************************************************/
+/******************************************************************************/
 
 
-  /* This section performs tests similar to the prior one but using the internal
-   * Miniflare dispatchFetch() handler. */
-  "Miniflare Dispatch": async ({ runScope }) => {
-    const ctx = {};
-    try {
-      await aegisSetup(ctx, './test/worker/wrangler.toml');
+aegis.test`Wrapped Fetch`(async () => {
+  const ctx = {};
+  try {
+    await aegisSetup(ctx, './test/worker/wrangler.toml');
 
-    await $check`Raw fetch with fragment succeeds on valid route`
-      .call(async () => {
-        const url = new URL('/test', ctx.serverBaseUrl).toString();
-        const res = await ctx.worker.dispatchFetch(url);
-        return { status: res.status, text: await res.text() };
-      })
-      .eq($.status, 200)
-      .eq($.text, 'Hello World');
+    const fragment = await ctx.fetch('/test');
+    $.check`Inner fetch with fragment succeeds on valid route`(
+      $.eq(fragment.status, 200),
+      $.eq(await fragment.text(), 'Hello World')
+    );
 
-    await $check`Raw fetch with fragment fails on invalid route`
-      .call(async () => {
-        const url = new URL('/non-existent-route', ctx.serverBaseUrl).toString();
-        const res = await ctx.worker.dispatchFetch(url);
-        return { status: res.status, text: await res.text() };
-      })
-      .eq($.status, 404)
-      .eq($.text, 'Not found');
+    const missingFragment = await ctx.fetch('/non-existent-route');
+    $.check`Inner fetch with fragment fails on invalid route`(
+      $.eq(missingFragment.status, 404),
+      $.eq(await missingFragment.text(), 'Not found')
+    );
 
-    await $check`Raw fetch with full URL succeeds on valid route`
-      .call(async () => {
-        const url = new URL('/test', ctx.serverBaseUrl).toString();
-        const res = await ctx.worker.dispatchFetch(url);
-        return { status: res.status, text: await res.text() };
-      })
-      .eq($.status, 200)
-      .eq($.text, 'Hello World');
+    const fullUrl = new URL('/test', ctx.serverBaseUrl).toString();
+    const full = await ctx.fetch(fullUrl);
+    $.check`Inner fetch with full URL succeeds on valid route`(
+      $.eq(full.status, 200),
+      $.eq(await full.text(), 'Hello World')
+    );
 
-    await $check`Raw fetch with full URL fails on invalid route`
-      .call(async () => {
-        const url = new URL('/non-existent-route', ctx.serverBaseUrl).toString();
-        const res = await ctx.worker.dispatchFetch(url);
-        return { status: res.status, text: await res.text() };
-      })
-      .eq($.status, 404)
-      .eq($.text, 'Not found');
-
-    } finally {
-      await aegisTeardown(ctx);
-    }
-  },
+    const missingUrl = new URL('/non-existent-route', ctx.serverBaseUrl).toString();
+    const missingFull = await ctx.fetch(missingUrl);
+    $.check`Inner fetch with full URL fails on invalid route`(
+      $.eq(missingFull.status, 404),
+      $.eq(await missingFull.text(), 'Not found')
+    );
+  } finally {
+    await aegisTeardown(ctx);
+  }
+});
 
 
-  /****************************************************************************/
+/******************************************************************************/
 
 
-  /* This section is similar to the above but uses the node fetch() method to do
-   * this, as an extra test. */
-  "Node Fetch": async ({ runScope }) => {
-    const ctx = {};
-    try {
-      await aegisSetup(ctx, './test/worker/wrangler.toml');
+aegis.test`Miniflare Dispatch`(async () => {
+  const ctx = {};
+  try {
+    await aegisSetup(ctx, './test/worker/wrangler.toml');
 
-    await $check`Node fetch succeeds on valid route`
-      .call(async () => {
-        const url = new URL('/test', ctx.serverBaseUrl).toString();
-        const res = await fetch(url);
-        return { status: res.status, text: await res.text() };
-      })
-      .eq($.status, 200)
-      .eq($.text, 'Hello World');
+    const fragmentUrl = new URL('/test', ctx.serverBaseUrl).toString();
+    const fragment = await ctx.worker.dispatchFetch(fragmentUrl);
+    $.check`Raw fetch with fragment succeeds on valid route`(
+      $.eq(fragment.status, 200),
+      $.eq(await fragment.text(), 'Hello World')
+    );
 
-    await $check`Node fetch fails on invalid route`
-      .call(async () => {
-        const url = new URL('/non-existent-route', ctx.serverBaseUrl).toString();
-        const res = await fetch(url);
-        return { status: res.status, text: await res.text() };
-      })
-      .eq($.status, 404)
-      .eq($.text, 'Not found');
+    const missingUrl = new URL('/non-existent-route', ctx.serverBaseUrl).toString();
+    const missing = await ctx.worker.dispatchFetch(missingUrl);
+    $.check`Raw fetch with fragment fails on invalid route`(
+      $.eq(missing.status, 404),
+      $.eq(await missing.text(), 'Not found')
+    );
 
-    } finally {
-      await aegisTeardown(ctx);
-    }
-  },
+    const full = await ctx.worker.dispatchFetch(fragmentUrl);
+    $.check`Raw fetch with full URL succeeds on valid route`(
+      $.eq(full.status, 200),
+      $.eq(await full.text(), 'Hello World')
+    );
+
+    const missingFull = await ctx.worker.dispatchFetch(missingUrl);
+    $.check`Raw fetch with full URL fails on invalid route`(
+      $.eq(missingFull.status, 404),
+      $.eq(await missingFull.text(), 'Not found')
+    );
+  } finally {
+    await aegisTeardown(ctx);
+  }
+});
+
+
+/******************************************************************************/
+
+
+aegis.test`Node Fetch`(async () => {
+  const ctx = {};
+  try {
+    await aegisSetup(ctx, './test/worker/wrangler.toml');
+
+    const validUrl = new URL('/test', ctx.serverBaseUrl).toString();
+    const valid = await fetch(validUrl);
+    $.check`Node fetch succeeds on valid route`(
+      $.eq(valid.status, 200),
+      $.eq(await valid.text(), 'Hello World')
+    );
+
+    const missingUrl = new URL('/non-existent-route', ctx.serverBaseUrl).toString();
+    const missing = await fetch(missingUrl);
+    $.check`Node fetch fails on invalid route`(
+      $.eq(missing.status, 404),
+      $.eq(await missing.text(), 'Not found')
+    );
+  } finally {
+    await aegisTeardown(ctx);
+  }
 });
 
 

@@ -62,9 +62,20 @@ export async function aegisSetup(ctx, inputConfig, {
   env = undefined
 }) {}
 ```
-An `async` function to be invoked in your tests, for example from the `setup`
-hook in your Aegis config file. This uses the provided configuration to create
-a new Miniflare instance within which your tests can run.
+An `async` function to be invoked from an `aegis.setup()` entry in a test file.
+Aegis 0.4 removed config-level setup hooks. This uses the provided configuration
+to create a new Miniflare instance within which your tests can run.
+
+The helper does not change the process working directory: paths in a
+configuration file are resolved relative to that file, and paths in an object
+configuration are resolved relative to the project working directory.
+
+Because of this, a configuration can stay portable: it never needs absolute
+paths or working-directory-specific paths to help the tests find its files.
+
+The same holds when the configuration is loaded by absolute path from an
+unrelated working directory; the Miniflare module root is selected so that on-
+disk scripts remain loadable in that case.
 
 `inputConfig` can be one of:
 - A wrangler configuration file filename (in `TOML`, `JSON`, or `JSONC` format)
@@ -146,33 +157,40 @@ An async function that will safely shut down and dispose of a Miniflare
 worker instance created by `aegisSetup` and removes from the `ctx` all of the
 values that `aegisSetup` added to it.
 
-Generally you would call this from the `teardown` hook in your Aegis
-configuration file, although importantly you want to pair it with `aegisSetup`,
-however that gets called.
+Call this from a final `aegis.setup()` entry in the same test file, after the
+tests, so it pairs with the setup that created the instance.
 
 ---
 
 ```javascript
-export function initializeCustomChecks() {}
+export function initializeCustomChecks(aegisApi = aegis) {}
 ```
 
-A function that registers several custom checks with Aegis to simplify testing.
-This augments the internal tests that are already available in Aegis.
+A function that registers several custom assertions with Aegis to simplify
+testing. This augments the assertions that are already available in Aegis.
 
-* `.isArray($)`: Checks if a value is an array.
-* `.isNotArray($)`: Checks if a value is not an array.
-* `.isObject($)`: Checks if a value is a plain object.
-* `.isNotObject($)`: Checks if a value is not a plain object.
-* `.keyCount($, count)`: Checks if an object has an exact number of keys.
-* `.isFunction($)`: A shortcut to check if a value is an instance of
+Call it in each test file, or in a module imported by each test file: Aegis 0.4
+runs test files in isolated worker threads, and assertion registrations are per
+worker. The optional `aegisApi` argument lets a linked or duplicated copy of
+`@axel669/aegis` register the assertions on the instance the test file uses.
+
+* `$.isArray(value)`: Checks if a value is an array.
+* `$.isNotArray(value)`: Checks if a value is not an array.
+* `$.isObject(value)`: Checks if a value is a plain object.
+* `$.isNotObject(value)`: Checks if a value is not a plain object.
+* `$.keyCount(value, count)`: Checks if an object has an exact number of keys.
+* `$.isFunction(value)`: A shortcut to check if a value is an instance of
   `Function`.
-* `.isNotFunction($)`: A shortcut to check if a value is not an instance of
+* `$.isNotFunction(value)`: A shortcut to check if a value is not an instance of
   `Function`.
-* `.deepEquals($, expected)`: Does a deep equality check (e.g. on an array or
- an object) to ensure that they are completely equal; can also be used on other
- values as well.
-* `.notDeepEquals($, expected)`: Does a deep equality check as above, but with a
-  check for inequality instead.
+* `$.deepEquals(value, expected)`: Does a deep equality check (e.g. on an array
+  or an object) to ensure that they are completely equal; can also be used on
+  other values as well.
+* `$.notDeepEquals(value, expected)`: Does a deep equality check as above, but
+  with a check for inequality instead.
+* `$.throwsMessage(fn, message)`: Checks that a synchronous function throws,
+  optionally with an exact error message. Await and check asynchronous
+  rejections explicitly.
 
 
 ### Specifying an Environment
@@ -267,18 +285,31 @@ replaced with `[redacted]` and values sourced from `process.env` are not shown.
 
 ## Test Configuration Examples
 
-You can import the helper functions into your `aegis.config.js` file to easily
-set up a test environment. The `aegisSetup()` function accepts either an object
-that is a structured Wrangler config object or the name of a wrangler config
-file, and will configure Miniflare appropriately.
+Aegis 0.4 removed config-level setup hooks and `failAction`. The config file
+only lists the test files; `aegisSetup()` and `aegisTeardown()` are called from
+`aegis.setup()` entries in a test file (or a shared module). Setup entries run in
+declaration order, so put teardown after the tests.
+
+The `aegisSetup()` function accepts either an object that is a structured
+Wrangler config object or the name of a Wrangler config file, and configures
+Miniflare appropriately.
 
 **Example `aegis.config.js`:**
 
+```js
+export const files = [
+  "test/**/*.test.js",
+];
+```
+
+**Example test file:**
+
 This example configures a worker to include a binding for a database and an R2
-bucket; they appear in the `ctx` as `ctx.env.DB` and `ctx.env.BUCKET`
-respectively.
+bucket; they appear in the state as `state.ctx.env.DB` and
+`state.ctx.env.BUCKET` respectively.
 
 ```js
+import { aegis } from '@axel669/aegis';
 import {
   initializeCustomChecks,
   aegisSetup,
@@ -287,31 +318,29 @@ import {
 
 initializeCustomChecks();
 
-export const config = {
-    files: [
-        "test/**/*.test.js",
-    ],
-    hooks: {
-        async setup(ctx) {
-            await aegisSetup(ctx, {
-              d1_databases: [{
-                binding: 'DB',
-                database_name: 'test-db',
-                database_id: 'test-db-id'
-              }],
-              r2_buckets: [{
-                binding: 'BUCKET',
-                bucket_name: 'test-bucket'
-              }]
-            });
-        },
+aegis.setup(async (state) => {
+  state.ctx = {};
+  await aegisSetup(state.ctx, {
+    d1_databases: [{
+      binding: 'DB',
+      database_name: 'test-db',
+      database_id: 'test-db-id'
+    }],
+    r2_buckets: [{
+      binding: 'BUCKET',
+      bucket_name: 'test-bucket'
+    }]
+  });
+});
 
-        async teardown(ctx) {
-            await aegisTeardown(ctx);
-        },
-    },
-    failAction: "afterSection",
-}
+aegis.test`...`(async (state) => {
+  const ctx = state.ctx;
+  // tests
+});
+
+aegis.setup(async (state) => {
+  await aegisTeardown(state.ctx);
+});
 ```
 
 The format of the configuration object is that of a loaded Wrangler

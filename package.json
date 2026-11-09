@@ -17,7 +17,7 @@
     "./config": "./lib/wrangler.js"
   },
   "scripts": {
-    "test": "aegis test/aegis.config.js"
+    "test": "aegis -c test/aegis.config.js"
   },
   "files": [
     "lib",
@@ -29,13 +29,13 @@
     "aegis"
   ],
   "devDependencies": {
-    "@axel669/aegis": "^0.3.1",
+    "@axel669/aegis": "^0.4.0",
     "json5": "^2.2.3",
     "miniflare": "^4.20260730.0",
     "smol-toml": "^1.9.1"
   },
   "peerDependencies": {
-    "@axel669/aegis": "^0.3.1",
+    "@axel669/aegis": "^0.4.0",
     "json5": "^2.2.3",
     "miniflare": "^4.20260730.0",
     "smol-toml": "^1.9.1"
@@ -43,5 +43,5 @@
   "dependencies": {
     "mime-db": "^1.54.0"
   },
-  "packageManager": "pnpm@11.6.0"
+  "packageManager": "pnpm@11.28.11"
 }

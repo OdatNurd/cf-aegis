@@ -1,38 +1,25 @@
 /******************************************************************************/
 
 
-import { initializeCustomChecks } from "../lib/index.js";
+// If true, then console.log statements that are in the test files will be
+// shown in the console while the tests are running. If false, the logs will
+// not be shown during the runtime. Regardless of the value, all the logs are
+// available in arrays in the results objects.
+export const logOutput = false
 
 
 /******************************************************************************/
 
 
-// Import our custom checks.
-initializeCustomChecks();
-
-
-/******************************************************************************/
-
-
-export const config = {
-  files: [
-    "test/config.test.js",
-    "test/checks.test.js",
-    "test/env.test.js",
-    "test/setup.test.js",
-    "test/fetch.test.js",
-    "test/assets.test.js",
-    "test/mixed.test.js",
-  ],
-
-  // The usual setup and teardown hooks are in the individual tests since they
-  // exercise different configuration files and setups.
-
-  // Can be set to "afterSection" or "afterCollection" to have the test suite
-  // exit as soon as a check fails in a section or collection. Default of
-  // "ignore" runs all tests without stopping on failures.
-  failAction: "afterSection",
-}
+export const files = [
+  "test/config.test.js",
+  "test/checks.test.js",
+  "test/env.test.js",
+  "test/setup.test.js",
+  "test/fetch.test.js",
+  "test/assets.test.js",
+  "test/mixed.test.js",
+];
 
 
 /******************************************************************************/

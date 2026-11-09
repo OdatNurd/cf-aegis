@@ -13,8 +13,8 @@ importers:
         version: 1.54.0
     devDependencies:
       '@axel669/aegis':
-        specifier: ^0.3.1
-        version: 0.3.1
+        specifier: ^0.4.0
+        version: 0.4.0
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -27,9 +27,12 @@ importers:
 
 packages:
 
-  '@axel669/aegis@0.3.1':
-    resolution: {integrity: sha512-NUxJoIBDZxkiitrEz1GeMIf8LGftNhcjsI95Xj28Qjmvv73WVx/c6Af8Bzl0kzXoIB+aq8aP+I7mJTJeOWM2eg==}
+  '@axel669/aegis@0.4.0':
+    resolution: {integrity: sha512-FPTbFhoj/LgVs9lp73ekS4O4pns2x5rHXQ2koJsgiPAaaJuQFOQKZysbHow+lf3Xu5tuBNNBWktl52giVlml/Q==}
     hasBin: true
+
+  '@axel669/result@0.2.1':
+    resolution: {integrity: sha512-M5ujNYsQaIv0I0uQrZTxSrFnaz9tt6IwoGRvwLE5c2MWPFvz7nlI9qzjChb1mGl5M7sL+pmshexDkjJoRsI9Hg==}
 
   '@cloudflare/workerd-darwin-64@1.20260730.1':
     resolution: {integrity: sha512-+MBHmPaiTe2KajryW0T24rZvWFxb41hD3d8anNzQqHzft6vSEb18+sp0znSwxgij7ApPhSM1+vhkNg4f3YMguA==}
@@ -403,9 +406,12 @@ packages:
 
 snapshots:
 
-  '@axel669/aegis@0.3.1':
+  '@axel669/aegis@0.4.0':
     dependencies:
+      '@axel669/result': 0.2.1
       fast-glob: 3.3.3
+
+  '@axel669/result@0.2.1': {}
 
   '@cloudflare/workerd-darwin-64@1.20260730.1':
     optional: true
